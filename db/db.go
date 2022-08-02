@@ -56,10 +56,20 @@ func InitDb() {
 	// 根据模型创建数据库(执行数据库迁移文件)
 	// 第二个参数：最容易出错的地方，如果值为ture时，表已经存在并且表中有值的情况下，它会先删除原来的表，然后重新创建，这样原表中的数据就全部丢失了。
 	// 第三个参数：是否输出建表的sql日志 true:输出 false：不输出
-	if err := db.AutoMigrate(&models.User{}, &models.UserDetail{}); err != nil {
-
+	if err := db.AutoMigrate(
+		&models.Admin{},
+		&models.Company{},
+		&models.Role{},
+		&models.User{},
+		&models.UserCommonWechat{},
+		&models.UserCompanyWechat{},
+		&models.UserDetail{},
+		&models.UserIdCard{},
+		&models.UserVisit{},
+		&models.WechatCompany{},
+		&models.WechatMenu{},
+	); err != nil {
 		log.Fatal(err)
-
 	}
 	log.Println("db init start successful")
 }

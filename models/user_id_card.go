@@ -13,8 +13,8 @@ import (
 type UserIdCard struct {
 	UserId    uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
 	IdNumber  string    `gorm:"Column:id_number;Type:varchar(50);null;Comment:身份证号码;" json:"id_number"`
-	FrontUrl  string    `gorm:"column:front_url;Comment:身份证正面图片URL;" json:"front_url"`
-	BackUrl   string    `gorm:"column:back_url;Comment:身份证反面图片URL;" json:"back_url"`
+	FrontUrl  string    `gorm:"column:front_url;Type:varchar(100);Comment:身份证正面图片URL;" json:"front_url"`
+	BackUrl   string    `gorm:"column:back_url;Type:varchar(100);Comment:身份证反面图片URL;" json:"back_url"`
 	ModelTime ModelTime `gorm:"Embedded;"`
 }
 

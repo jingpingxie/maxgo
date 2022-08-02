@@ -7,7 +7,7 @@ package models
 // @Date:2022-08-02 11:56:45
 //
 type UserDetail struct {
-	UserId    uint64    `gorm:"Column:user_id;Unique:true;NotNull:true;Comment:用户id;" json:"user_id"`
+	UserId    uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:用户id;" json:"user_id"`
 	Resume    string    `gorm:"Column:resume;Type:longtext;Comment:个人简历;" json:"resume"`
 	ModelTime ModelTime `gorm:"Embedded;"`
 }

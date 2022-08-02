@@ -13,9 +13,9 @@ import (
 //
 type User struct {
 	UserId        uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
-	UserName      string    `gorm:"Column:user_name;Type:varchar(100);NotNull:true;Comment:用户名;" json:"user_name"` //用户名,可重复
-	NickName      string    `gorm:"Column:nick_name;Type:varchar(100);Comment:用户昵称;" json:"nick_name"`
-	RealName      string    `gorm:"Column:real_name;Type:varchar(100);Comment:真实姓名;" json:"real_name"`
+	UserName      string    `gorm:"Column:user_name;Type:varchar(50);NotNull:true;Comment:用户名;" json:"user_name"` //用户名,可重复
+	NickName      string    `gorm:"Column:nick_name;Type:varchar(30);Comment:用户昵称;" json:"nick_name"`
+	RealName      string    `gorm:"Column:real_name;Type:varchar(50);Comment:真实姓名;" json:"real_name"`
 	CountryCode   uint8     `gorm:"Column:country_code;null;Comment:手机的国家区号;" json:"country_code"`
 	Mobile        string    `gorm:"Column:mobile;Type:varchar(20);Unique:true;NotNull:true;Comment:用户手机号;" json:"mobile"`
 	ContactMobile string    `gorm:"Column:contact_mobile;Type:varchar(20);null;Comment:联系人手机号;" json:"contact_mobile"`
@@ -23,7 +23,6 @@ type User struct {
 	Salt          string    `gorm:"Column:salt;Type:varchar(10);null;Comment:密码加盐;" json:"salt"`
 	Email         string    `gorm:"Column:email;Type:varchar(100);null;Comment:邮箱;" json:"email"`
 	Birthday      time.Time `gorm:"Column:birthday;Type:datetime;null;Comment:生日;" json:"birthday"`
-	WechatUnionId string    `gorm:"Column:wechat_union_id;Type:varchar(30);null;Comment:微信union id;" json:"wechat_union_id"`
 	ParentUserId  uint64    `gorm:"Column:parent_user_id;Comment:介绍人;" json:"parent_user_id"`
 	Gender        byte      `gorm:"Column:gender;default(1);Comment:性别：1 男 2 女;" json:"gender"`
 	Avatar        string    `gorm:"Column:avatar;Type:varchar(100);null;Comment:头像url;" json:"avatar"`
