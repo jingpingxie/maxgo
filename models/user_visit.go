@@ -19,7 +19,7 @@ import (
 // @Date:2022-08-02 11:56:53
 //
 type UserVisit struct {
-	UserId        uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
+	UserID        uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
 	LastLoginTime time.Time `gorm:"Column:last_login_time;Type:datetime;null;Comment:最近登录时间;" json:"last_login_time"`
 	LastIp        time.Time `gorm:"Column:last_ip;Type:datetime;null;Comment:最近登录ip地址;" json:"last_ip"`
 	VisitCount    uint16    `gorm:"Column:visit_count;Comment:登录次数;" json:"visit_count"`

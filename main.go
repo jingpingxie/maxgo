@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
-	"maxgo/db"
+	"maxgo/dao"
 	_ "maxgo/models"
 	_ "maxgo/routers"
 	"maxgo/tools/snowflake"
@@ -11,10 +11,12 @@ import (
 
 func init() {
 	//初始化数据库
-	db.InitDb()
+	dao.InitDb()
 }
 func main() {
 	s, _ := snowflake.GenerateSnowflakeId()
 	logs.Info(s)
 	beego.Run()
+	sqlDb, _ := dao.Db.DB()
+	defer sqlDb.Close()
 }

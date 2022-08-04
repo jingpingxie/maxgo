@@ -7,9 +7,9 @@ package models
 // @Date:2022-08-02 11:56:28
 //
 type UserCommonWechat struct {
-	UserWechatId uint64    `gorm:"Column:user_wechat_id;PrimaryKey:true;AutoIncrement:false;Comment:微信用户id;" json:"user_wechat_id"`
-	UserId       uint64    `gorm:"Column:user_id;NotNull:true;UniqueIndex:uu;Comment:用户id;" json:"user_id"`
-	UnionId      string    `gorm:"column:unionid;Type:varchar(30);NotNull:true;UniqueIndex:uu;Unique:true;" json:"unionid"`
+	UserWechatID uint64    `gorm:"Column:user_wechat_id;PrimaryKey:true;AutoIncrement:false;Comment:微信用户id;" json:"user_wechat_id"`
+	UserID       uint64    `gorm:"Column:user_id;NotNull:true;UniqueIndex:uu;Comment:用户id;" json:"user_id"`
+	UnionID      string    `gorm:"column:unionid;Type:varchar(30);NotNull:true;UniqueIndex:uu;Unique:true;" json:"unionid"`
 	Nickname     string    `gorm:"column:nickname;Type:varchar(30);" json:"nickname"`
 	Sex          uint8     `gorm:"column:sex" json:"sex"`
 	Language     string    `gorm:"column:language;Type:varchar(20);Comment:用户的语言" json:"language"`

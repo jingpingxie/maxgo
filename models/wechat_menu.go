@@ -11,9 +11,9 @@ import (
 // @Date:2022-08-02 11:57:07
 //
 type WechatMenu struct {
-	WechatMenuId    uint64    `gorm:"Column:wechat_menu_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:wechat_menu_id;" json:"wechat_menu_id"`
-	WechatCompanyId uint64    `gorm:"Column:wechat_company_id;NotNull:true;Comment:wechat_company_id;" json:"wechat_company_id"`
-	ParentId        uint64    `gorm:"Column:parent_id;Comment:父级菜单id;" json:"parent_id"`
+	WechatMenuID    uint64    `gorm:"Column:wechat_menu_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:wechat_menu_id;" json:"wechat_menu_id"`
+	WechatCompanyID uint64    `gorm:"Column:wechat_company_id;NotNull:true;Comment:wechat_company_id;" json:"wechat_company_id"`
+	ParentID        uint64    `gorm:"Column:parent_id;Comment:父级菜单id;" json:"parent_id"`
 	Name            string    `gorm:"Column:name;Type:varchar(30);NotNull:true;Comment:菜单标题;" json:"name"`
 	Type            string    `gorm:"Column:type;Type:varchar(20);NotNull:true;Comment:菜单类型 view click;" json:"type"`
 	Url             string    `gorm:"Column:url;Type:varchar(100);NotNull:true;" json:"url"`

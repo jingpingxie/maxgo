@@ -46,7 +46,7 @@ func NewSnowflake(datacenterId, workerId int64) (*Snowflake, error) {
 	}, nil
 }
 
-func (s *Snowflake) NextVal() int64 {
+func (s *Snowflake) NextVal() uint64 {
 	s.Lock()
 	now := time.Now().UnixNano() / 1000000 // 转毫秒
 	if s.timestamp == now {
@@ -70,7 +70,7 @@ func (s *Snowflake) NextVal() int64 {
 		return 0
 	}
 	s.timestamp = now
-	r := (t)<<timestampShift | (s.datacenterId << datacenterIdShift) | (s.workerId << workerIdShift) | (s.sequence)
+	r := (uint64)((t)<<timestampShift | (s.datacenterId << datacenterIdShift) | (s.workerId << workerIdShift) | (s.sequence))
 	s.Unlock()
 	return r
 }
@@ -108,7 +108,7 @@ func (s *Snowflake) NextVal() int64 {
 //	return
 //}
 
-func GenerateSnowflakeId() (int64, error) {
+func GenerateSnowflakeId() (uint64, error) {
 	s, err := NewSnowflake(int64(0), int64(0))
 	if err != nil {
 		glog.Error(err)

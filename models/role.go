@@ -11,8 +11,8 @@ import (
 // @Date:2022-08-02 11:55:14
 //
 type Role struct {
-	RoleId      uint64    `gorm:"Column:role_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:角色ID;" json:"role_id"`
-	CompanyId   uint64    `gorm:"Column:company_id;AutoIncrement:false;NotNull:true;UniqueIndex:cn;Comment:company_id;" json:"company_id"`
+	RoleID      uint64    `gorm:"Column:role_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:角色ID;" json:"role_id"`
+	CompanyID   uint64    `gorm:"Column:company_id;AutoIncrement:false;NotNull:true;UniqueIndex:cn;Comment:company_id;" json:"company_id"`
 	Name        string    `gorm:"Column:name;Type:varchar(20);NotNull:true;UniqueIndex:cn;Comment:角色名称;" json:"name"`
 	Describe    string    `gorm:"Column:describe;Type:varchar(50);Comment:角色描述;" json:"describe"`
 	PurviewList string    `gorm:"Column:purview_list;Type:text;NotNull:true;Comment:管理员权限;" json:"purview_list"`

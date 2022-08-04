@@ -10,9 +10,9 @@ import (
 // @Author:jingpingxie
 // @Date:2022-08-02 11:46:03
 //
-type UserIdCard struct {
-	UserId    uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
-	IdNumber  string    `gorm:"Column:id_number;Type:varchar(50);null;Comment:身份证号码;" json:"id_number"`
+type UserIDCard struct {
+	UserID    uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
+	IDNumber  string    `gorm:"Column:id_number;Type:varchar(50);null;Comment:身份证号码;" json:"id_number"`
 	FrontUrl  string    `gorm:"column:front_url;Type:varchar(100);Comment:身份证正面图片URL;" json:"front_url"`
 	BackUrl   string    `gorm:"column:back_url;Type:varchar(100);Comment:身份证反面图片URL;" json:"back_url"`
 	ModelTime ModelTime `gorm:"Embedded;"`
@@ -35,6 +35,6 @@ func init() {
 // @Receiver:uic
 // @Return:string
 //
-func (uic *UserIdCard) TableName() string {
+func (uic *UserIDCard) TableName() string {
 	return "user_id_card"
 }
