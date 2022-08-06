@@ -7,7 +7,7 @@
 //API接口TOKEN设计
 //https://blog.csdn.net/weixin_45070175/article/details/118559272
 //https://blog.51cto.com/u_11045899/5344518
-package tools
+package auth
 
 import (
 	"crypto/rand"

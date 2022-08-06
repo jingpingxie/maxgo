@@ -5,14 +5,16 @@
 // @Author:jingpingxie
 // @Date:2022/8/3 12:33
 //
-package user
+package auth
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"errors"
 	"maxgo/common/user"
 	"maxgo/dao"
 	"maxgo/models"
-	"maxgo/tools"
+	"maxgo/tools/auth"
 	"maxgo/tools/snowflake"
 	"net/http"
 )
@@ -62,7 +64,7 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 	}
 
 	// generate token
-	tokenString, err := tools.GenerateToken(dbUser.UserID, dbUser.Mobile, 0)
+	tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
@@ -70,6 +72,13 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 		UserName: dbUser.UserName,
 		Token:    tokenString,
 	}, nil
+}
+
+func generateToken(userID uint64, mobile string) (string, error) {
+	tokenString, err := auth.GenerateToken(userID, mobile, 0)
+	//generate rsa private key
+	rsa.GenerateKey(rand.Reader, 2048)
+	return tokenString, err
 }
 
 //
@@ -85,7 +94,7 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 func checkUserPassword(inputPassword string, dbPassword string, salt string) error {
 	var hash string
 	var err error
-	if hash, err = tools.GeneratePassHash(inputPassword, salt); err != nil {
+	if hash, err = auth.GeneratePassHash(inputPassword, salt); err != nil {
 		return err
 	}
 	if hash != dbPassword {
@@ -135,10 +144,10 @@ func generateUserPasswordHash(password string) (saltRet string, hashRet string, 
 	var salt string
 	var hash string
 	var err error
-	if salt, err = tools.GenerateSalt(); err != nil {
+	if salt, err = auth.GenerateSalt(); err != nil {
 		return "", "", err
 	}
-	if hash, err = tools.GeneratePassHash(password, salt); err != nil {
+	if hash, err = auth.GeneratePassHash(password, salt); err != nil {
 		return salt, "", err
 	}
 	return salt, hash, nil
@@ -183,7 +192,7 @@ func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
 			return http.StatusInternalServerError, nil, err
 		}
 		// generate token
-		tokenString, err := tools.GenerateToken(dbUser.UserID, rr.Mobile, 0)
+		tokenString, err := auth.GenerateToken(dbUser.UserID, rr.Mobile, 0)
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
@@ -215,7 +224,7 @@ func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
 	}
 
 	// generate token
-	tokenString, err := tools.GenerateToken(userID, rr.Mobile, 0)
+	tokenString, err := generateToken(userID, rr.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}

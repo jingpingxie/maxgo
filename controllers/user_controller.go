@@ -4,7 +4,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	user2 "maxgo/common/user"
-	"maxgo/dao/user"
+	"maxgo/dao/auth"
 	"maxgo/tools/jsonUtils"
 	"net/http"
 )
@@ -46,7 +46,7 @@ func (uc *UserController) Login() {
 		return
 	}
 	logs.Info("account:%s password:%s is login", lr.Account, lr.Password)
-	statusCode, lrs, err := user.DoLogin(lr)
+	statusCode, lrs, err := auth.DoLogin(lr)
 	if err != nil {
 		uc.respond(statusCode, err.Error())
 		return
@@ -69,10 +69,13 @@ func (uc *UserController) Register() {
 		uc.respond(http.StatusBadRequest, err.Error())
 		return
 	}
-	statusCode, registerUser, err := user.DoRegisterUser(ur)
+	statusCode, registerUser, err := auth.DoRegisterUser(ur)
 	if err != nil {
 		uc.respond(statusCode, err.Error())
 		return
 	}
 	uc.respond(http.StatusOK, "", registerUser)
+}
+func (uc *UserController) Logout() {
+
 }

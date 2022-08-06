@@ -14,6 +14,7 @@ func init() {
 	dao.InitDb()
 }
 func main() {
+	xrsa.GetPublicKey()
 	s, _ := snowflake.GenerateSnowflakeId()
 	logs.Info(s)
 	beego.Run()

@@ -57,17 +57,3 @@ func (u *User) TableName() string {
 func (u *User) TableEngine() string {
 	return "INNODB"
 }
-
-//// TableUnique 联合唯一键
-//func (u *User) TableUnique() [][]string {
-//	return [][]string{
-//		{"mobile", "user_name"},
-//	}
-//}
-//
-//// TableIndex 普通联合 索引
-//func (u *User) TableIndex() [][]string {
-//	return [][]string{
-//		{"gender", "user_name"},
-//	}
-//}
