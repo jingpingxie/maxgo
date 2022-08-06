@@ -4,7 +4,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	user2 "maxgo/common/user"
-	"maxgo/dao/auth"
+	"maxgo/services/auth"
 	"maxgo/tools/jsonUtils"
 	"net/http"
 )

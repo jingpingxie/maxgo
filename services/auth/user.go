@@ -12,8 +12,8 @@ import (
 	"crypto/rsa"
 	"errors"
 	"maxgo/common/user"
-	"maxgo/dao"
 	"maxgo/models"
+	"maxgo/services"
 	"maxgo/tools/auth"
 	"maxgo/tools/snowflake"
 	"net/http"
@@ -47,7 +47,7 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 
 	// check the username if existing
 	var dbUser models.User
-	dao.Db.Raw("select user_id,user_name,salt,password from user where mobile = ? or email=?", account, account).Scan(&dbUser)
+	services.Db.Raw("select user_id,user_name,salt,password from user where mobile = ? or email=?", account, account).Scan(&dbUser)
 	if dbUser.UserID == 0 {
 		return http.StatusUnauthorized, nil, errors.New("error: user is not existing")
 	}
@@ -123,7 +123,7 @@ func updateUserPassword(userID uint64, password string) error {
 		return err
 	}
 	//update db salt and password hash
-	if err = dao.Db.Model(&models.User{}).Where("user_id = ?", userID).Updates(models.User{Salt: salt, Password: hash}).Error; err != nil {
+	if err = services.Db.Model(&models.User{}).Where("user_id = ?", userID).Updates(models.User{Salt: salt, Password: hash}).Error; err != nil {
 		return errors.New("update user salt and password," + err.Error())
 	}
 	return nil
@@ -180,7 +180,7 @@ func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
 
 	// check the username if existing
 	var dbUser models.User
-	dao.Db.Raw("select user_id,user_name,salt,password from user where mobile = ?", mobile).Scan(&dbUser)
+	services.Db.Raw("select user_id,user_name,salt,password from user where mobile = ?", mobile).Scan(&dbUser)
 	if dbUser.UserID != 0 {
 		// the user is existed
 		// check the password
@@ -219,7 +219,7 @@ func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
 		Mobile:   rr.Mobile,
 		Salt:     salt,
 		Password: hash}
-	if err = dao.Db.Create(newUser).Error; err != nil {
+	if err = services.Db.Create(newUser).Error; err != nil {
 		return http.StatusInternalServerError, nil, errors.New("register user," + err.Error())
 	}
 
