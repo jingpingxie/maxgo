@@ -17,7 +17,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
-	"github.com/astaxie/beego/logs"
+	logs "github.com/sirupsen/logrus"
 )
 
 //
@@ -90,7 +90,7 @@ func RsaEncrypt(publicKey string, plainText string) (string, error) {
 		logs.Error("Error for encrypting plaintext: %+v\n", err)
 		return "", err
 	}
-	return hex.EncodeToString(cipherBytes), nil
+	return base64.StdEncoding.EncodeToString(cipherBytes), nil
 }
 
 //
@@ -109,9 +109,9 @@ func RsaDecrypt(privateKey string, cipherText string) (string, error) {
 		return "", err
 	}
 	//对密文进行解密
-	cipherBytes, err := hex.DecodeString(cipherText)
+	cipherBytes, err := base64.StdEncoding.DecodeString(cipherText)
 	if err != nil {
-		logs.Error("Error for decoding ciphertext: %+v\n", err)
+		logs.Error("Error for hex decoding ciphertext: %+v\n", err)
 		return "", err
 	}
 	plainBytes, err := rsa.DecryptPKCS1v15(rand.Reader, pr, cipherBytes)
@@ -206,6 +206,11 @@ func ConvertPublicKeyToBase64(key *rsa.PublicKey) (string, error) {
 		logs.Error("Error for marshal public key: %+v\n", err)
 		return "", err
 	}
+	str := base64.StdEncoding.EncodeToString(derPkix)
+	return str, nil
+}
+
+func ConvertPublicBytesToBase64(derPkix []byte) (string, error) {
 	str := base64.StdEncoding.EncodeToString(derPkix)
 	return str, nil
 }

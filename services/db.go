@@ -2,11 +2,11 @@ package services
 
 import (
 	"fmt"
-	"github.com/astaxie/beego"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
+	"maxgo/conf"
 	"maxgo/models"
 	"os"
 	"time"
@@ -28,11 +28,12 @@ func InitDb() {
 	log.Println("db init start")
 
 	//注册默认数据库
-	host := beego.AppConfig.String("db::host")
-	port, _ := beego.AppConfig.Int("db::port")
-	dbname := beego.AppConfig.String("db::databaseName")
-	user := beego.AppConfig.String("db::userName")
-	pwd := beego.AppConfig.String("db::password")
+	dbConf := conf.GetDBConf()
+	host := dbConf.Host
+	port := dbConf.Port
+	dbname := dbConf.DatabaseName
+	user := dbConf.UserName
+	pwd := dbConf.Password
 
 	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4", user, pwd, host, port, dbname)
 	fmt.Print(dataSource)

@@ -3,13 +3,13 @@
 // @Version:1.0.0
 // @Description:
 // @Author:jingpingxie
-// @Date:2022/8/3 16:28
+// @Date:2022/8/6 14:39
 //
-package jsonUtils
+package json_utils
 
 import (
 	"encoding/json"
-	"github.com/astaxie/beego/logs"
+	logs "github.com/sirupsen/logrus"
 )
 
 //

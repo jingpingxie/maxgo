@@ -2,7 +2,7 @@ package snowflake
 
 import (
 	"fmt"
-	"github.com/golang/glog"
+	logs "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -66,7 +66,7 @@ func (s *Snowflake) NextVal() uint64 {
 	t := now - epoch
 	if t > timestampMax {
 		s.Unlock()
-		glog.Errorf("epoch must be between 0 and %d", timestampMax-1)
+		logs.Errorf("epoch must be between 0 and %d", timestampMax-1)
 		return 0
 	}
 	s.timestamp = now
@@ -111,7 +111,7 @@ func (s *Snowflake) NextVal() uint64 {
 func GenerateSnowflakeId() (uint64, error) {
 	s, err := NewSnowflake(int64(0), int64(0))
 	if err != nil {
-		glog.Error(err)
+		logs.Error(err)
 		return 0, err
 	}
 	// ......

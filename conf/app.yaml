@@ -1,0 +1,16 @@
+app:
+  name: maxgo
+  port: :9090
+  mode: release
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: 123456
+  db: 1
+
+db:
+    host: localhost
+    port: 3306
+    userName: root
+    password: root
+    databaseName: maxplant
