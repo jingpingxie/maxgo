@@ -9,8 +9,8 @@ package main
 
 import (
 	logs "github.com/sirupsen/logrus"
-	_ "maxgo/controllers"
-	_ "maxgo/controllers/cert"
+	_ "maxgo/controllers/v1"
+	_ "maxgo/controllers/v1/cert"
 	"maxgo/routers"
 	"maxgo/services"
 	"os"

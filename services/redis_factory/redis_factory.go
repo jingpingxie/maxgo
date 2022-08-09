@@ -8,6 +8,7 @@
 package redis_factory
 
 import (
+	"crypto/md5"
 	"fmt"
 	"github.com/go-redis/redis"
 	logs "github.com/sirupsen/logrus"
@@ -123,7 +124,7 @@ func Zset() {
 
 //
 // @Title:GetHourRsaCert
-// @Description: get rsa cert data,the cert data should change per hour to prevent leak
+// @Description: get rsa cert data,the cert data should change per hour to prevent compromised
 // @Author:jingpingxie
 // @Date:2022-08-07 21:31:19
 // @Receiver:rf
@@ -131,7 +132,7 @@ func Zset() {
 func GetHourRsaCert() (string, *auth.RsaCert) {
 	now := time.Now()
 	hourTime := now.Format("2006010215") //round hour
-	rsaCertKey := hourTime
+	rsaCertKey := fmt.Sprintf("%x", md5.Sum([]byte(hourTime)))
 	rsaCertData := &auth.RsaCert{}
 	err := ClientRedis.Get(rsaCertKey).Scan(rsaCertData)
 	if err != nil {

@@ -5,7 +5,7 @@
 // @Author:jingpingxie
 // @Date:2022/8/7 14:15
 //
-package controllers
+package v1
 
 import (
 	"maxgo/controllers/base"

@@ -128,7 +128,7 @@ func Register(controller base.IBaseController) bool {
 func Bind(e *gin.Engine) {
 	//pathInit()
 	//apiv1 := e.Group("/api/v1")
-	api := e.Group("/api")
+	api := e.Group("/api/v1")
 	for _, route := range Routes {
 		//e.POST(path, match(path))
 		if route.httpMethod == "GET" {
