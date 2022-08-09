@@ -165,7 +165,8 @@ func GenerateThrowRsaCert() (certKey string, certData *auth.RsaCert) {
 	if err != nil {
 		return "", nil
 	}
-	err = ClientRedis.SetNX(rsaCertData.UID, rsaCertData, time.Hour).Err()
+	//the cert data will out of date after 5 seconds
+	err = ClientRedis.SetNX(rsaCertData.UID, rsaCertData, time.Second*5).Err()
 	if err != nil {
 		logs.Error("set rsa cert data to redis")
 		return "", nil

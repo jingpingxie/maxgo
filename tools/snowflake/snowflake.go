@@ -31,6 +31,16 @@ type Snowflake struct {
 	sequence     int64
 }
 
+//
+// @Title:NewSnowflake
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:36:04
+// @Param:datacenterId
+// @Param:workerId
+// @Return:*Snowflake
+// @Return:error
+//
 func NewSnowflake(datacenterId, workerId int64) (*Snowflake, error) {
 	if datacenterId < 0 || datacenterId > datacenterIdMax {
 		return nil, fmt.Errorf("datacenterid must be between 0 and %d", datacenterIdMax-1)
@@ -46,6 +56,14 @@ func NewSnowflake(datacenterId, workerId int64) (*Snowflake, error) {
 	}, nil
 }
 
+//
+// @Title:NextVal
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:36:00
+// @Receiver:s
+// @Return:uint64
+//
 func (s *Snowflake) NextVal() uint64 {
 	s.Lock()
 	now := time.Now().UnixNano() / 1000000 // 转毫秒
@@ -75,48 +93,22 @@ func (s *Snowflake) NextVal() uint64 {
 	return r
 }
 
-//// GetDeviceID 获取数据中心ID和机器ID
-//func GetDeviceID(sid int64) (datacenterId, workerId int64) {
-//	datacenterId = (sid >> datacenterIdShift) & datacenterIdMax
-//	workerId = (sid >> workerIdShift) & workerIdMax
-//	return
-//}
-
-//// GetTimestamp 获取时间戳
-//func GetTimestamp(sid int64) (timestamp int64) {
-//	timestamp = (sid >> timestampShift) & timestampMax
-//	return
-//}
-
-//// GetGenTimestamp 获取创建ID时的时间戳
-//func GetGenTimestamp(sid int64) (timestamp int64) {
-//	timestamp = GetTimestamp(sid) + epoch
-//	return
-//}
-
 //
-//// GetGenTime 获取创建ID时的时间字符串(精度：秒)
-//func GetGenTime(sid int64) (t string) {
-//	// 需将GetGenTimestamp获取的时间戳/1000转换成秒
-//	t = time.Unix(GetGenTimestamp(sid)/1000, 0).Format("2006-01-02 15:04:05")
-//	return
-//}
+// @Title:GenerateSnowflakeId
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:34:38
+// @Return:uint64
+// @Return:error
 //
-//// GetTimestampStatus 获取时间戳已使用的占比：范围（0.0 - 1.0）
-//func GetTimestampStatus() (state float64) {
-//	state = float64(time.Now().UnixNano()/1000000-epoch) / float64(timestampMax)
-//	return
-//}
-
 func GenerateSnowflakeId() (uint64, error) {
 	s, err := NewSnowflake(int64(0), int64(0))
 	if err != nil {
 		logs.Error(err)
 		return 0, err
 	}
-	// ......
-	// (s *Snowflake) NextVal() int64
-	// 返回1 (int64): 唯一ID
+
+	//(int64): unique id
 	id := s.NextVal()
 	return id, nil
 }

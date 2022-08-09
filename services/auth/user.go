@@ -74,6 +74,16 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 	}, nil
 }
 
+//
+// @Title:generateToken
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:39:27
+// @Param:userID
+// @Param:mobile
+// @Return:string
+// @Return:error
+//
 func generateToken(userID uint64, mobile string) (string, error) {
 	tokenString, err := auth.GenerateToken(userID, mobile, 0)
 	//generate rsa private key

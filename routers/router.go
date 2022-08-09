@@ -16,7 +16,12 @@ import (
 	"strings"
 )
 
-//路由结构体
+//
+// @Title:Route
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:42:48
+//
 type Route struct {
 	controller base.IBaseController
 	apiPath    string         //url路径
@@ -29,6 +34,13 @@ type Route struct {
 //路由集合
 var Routes = []Route{}
 
+//
+// @Title:InitRouter
+// @Description: init router
+// @Author:jingpingxie
+// @Date:2022-08-09 12:42:28
+// @Return:*gin.Engine
+//
 func InitRouter() *gin.Engine {
 	//初始化路由
 	engine := gin.Default()
@@ -37,7 +49,14 @@ func InitRouter() *gin.Engine {
 	return engine
 }
 
-//注册控制器
+//
+// @Title:Register
+// @Description: 注册控制器
+// @Author:jingpingxie
+// @Date:2022-08-09 12:42:19
+// @Param:controller
+// @Return:bool
+//
 func Register(controller base.IBaseController) bool {
 	ctrlName := reflect.TypeOf(controller).String()
 	fmt.Println("ctrlName=", ctrlName)
@@ -99,8 +118,13 @@ func Register(controller base.IBaseController) bool {
 	return true
 }
 
-//绑定路由 m是方法GET POST等
-//绑定基本路由
+//
+// @Title:Bind
+// @Description: 绑定基本路由
+// @Author:jingpingxie
+// @Date:2022-08-09 12:42:04
+// @Param:e
+//
 func Bind(e *gin.Engine) {
 	//pathInit()
 	//apiv1 := e.Group("/api/v1")
@@ -125,7 +149,15 @@ func Bind(e *gin.Engine) {
 	}
 }
 
-//根据path匹配对应的方法
+//
+// @Title:match
+// @Description: 根据path匹配对应的方法
+// @Author:jingpingxie
+// @Date:2022-08-09 12:41:50
+// @Param:path
+// @Param:route
+// @Return:gin.HandlerFunc
+//
 func match(path string, route Route) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fields := strings.Split(path, "/")

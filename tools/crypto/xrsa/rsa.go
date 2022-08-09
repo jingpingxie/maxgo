@@ -210,6 +210,15 @@ func ConvertPublicKeyToBase64(key *rsa.PublicKey) (string, error) {
 	return str, nil
 }
 
+//
+// @Title:ConvertPublicBytesToBase64
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:36:29
+// @Param:derPkix
+// @Return:string
+// @Return:error
+//
 func ConvertPublicBytesToBase64(derPkix []byte) (string, error) {
 	str := base64.StdEncoding.EncodeToString(derPkix)
 	return str, nil

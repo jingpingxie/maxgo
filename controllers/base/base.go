@@ -13,21 +13,63 @@ import (
 	logs "github.com/sirupsen/logrus"
 )
 
+//
+// @Title:IBaseController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:33:51
+//
 type IBaseController interface {
 	SetContext(ctx *gin.Context)
 	GetContext() (ctx *gin.Context)
 }
 
+//
+// @Title:BaseController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:33:46
+//
 type BaseController struct {
 	Ctx *gin.Context
 }
 
+//
+// @Title:SetContext
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:33:08
+// @Receiver:bc
+// @Param:ctx
+//
 func (bc *BaseController) SetContext(ctx *gin.Context) {
 	bc.Ctx = ctx
 }
+
+//
+// @Title:GetContext
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:33:11
+// @Receiver:bc
+// @Return:ctx
+//
 func (bc *BaseController) GetContext() (ctx *gin.Context) {
 	return bc.Ctx
 }
+
+//
+// @Title:Respond
+// @Description:
+// @Author:jingpingxie respond to front end
+// @Date:2022-08-09 12:33:19
+// @Receiver:bc
+// @Param:ctx
+// @Param:httpStatus
+// @Param:code
+// @Param:message
+// @Param:data
+//
 func (bc *BaseController) Respond(ctx *gin.Context, httpStatus int, code int, message string, data ...interface{}) {
 	respondData := gin.H{
 		"code": code,

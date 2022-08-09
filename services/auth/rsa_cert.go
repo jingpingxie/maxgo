@@ -37,6 +37,15 @@ func (rc *RsaCert) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, rc)
 
 }
+
+//
+// @Title:Generate
+// @Description: generate rsa cert data
+// @Author:jingpingxie
+// @Date:2022-08-09 12:39:52
+// @Receiver:rc
+// @Return:error
+//
 func (rc *RsaCert) Generate() error {
 	//generate rsa private key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)

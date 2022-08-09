@@ -9,6 +9,7 @@ package conf
 
 import (
 	"fmt"
+	logs "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -40,37 +41,35 @@ type DBConfig struct {
 	DatabaseName string
 }
 
+//
+// @Title:init
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:46:10
+//
 func init() {
 	viper.SetConfigType("yaml") //设置配置文件格式
 	viper.AddConfigPath("conf") //设置配置文件的路径
 	viper.SetConfigName("app")  //设置配置文件名
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("找不到配置文件..")
+			logs.Error("can't find config file")
 		} else {
-			fmt.Println("配置文件出错..")
+			logs.Error("error for config setting")
 		}
 	}
 	//打印获取到的配置文件的key
 	fmt.Println(viper.AllKeys())
-
 }
 
+//
+// @Title:InitConf
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:46:06
+// @Return:*Config
+//
 func InitConf() *Config {
-	//viper.SetConfigType("yaml") //设置配置文件格式
-	//viper.AddConfigPath("conf") //设置配置文件的路径
-	//viper.SetConfigName("app")  //设置配置文件名
-	//if err := viper.ReadInConfig(); err != nil {
-	//	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-	//		fmt.Println("找不到配置文件..")
-	//	} else {
-	//		fmt.Println("配置文件出错..")
-	//	}
-	//}
-	////打印获取到的配置文件的key
-	//fmt.Println(viper.AllKeys())
-	////[mysql.conn redis.port redis.password redis.host app.name app.port app.mode]
-
 	//返回配置文件的数据
 	return &Config{
 		AppConf: &AppConfig{
@@ -87,6 +86,14 @@ func InitConf() *Config {
 		},
 	}
 }
+
+//
+// @Title:GetDBConf
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-09 12:46:01
+// @Return:*DBConfig
+//
 func GetDBConf() *DBConfig {
 	return &DBConfig{
 		Host:         viper.GetString("db.host"),
