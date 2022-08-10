@@ -14,7 +14,8 @@ import (
 	"maxgo/common/user"
 	"maxgo/models"
 	"maxgo/services"
-	"maxgo/tools/auth"
+	"maxgo/services/redis_factory"
+	"maxgo/tools/auth/jwt"
 	"maxgo/tools/snowflake"
 	"net/http"
 )
@@ -85,8 +86,10 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 // @Return:error
 //
 func generateToken(userID uint64, mobile string) (string, error) {
-	tokenString, err := auth.GenerateToken(userID, mobile, 0)
+	tokenString, err := jwt.GenerateToken(userID, mobile, 0)
 	//generate rsa private key
+	uid, rsaCert := redis_factory.GetHourRsaCert()
+
 	rsa.GenerateKey(rand.Reader, 2048)
 	return tokenString, err
 }
@@ -104,7 +107,7 @@ func generateToken(userID uint64, mobile string) (string, error) {
 func checkUserPassword(inputPassword string, dbPassword string, salt string) error {
 	var hash string
 	var err error
-	if hash, err = auth.GeneratePassHash(inputPassword, salt); err != nil {
+	if hash, err = jwt.GeneratePassHash(inputPassword, salt); err != nil {
 		return err
 	}
 	if hash != dbPassword {
@@ -154,10 +157,10 @@ func generateUserPasswordHash(password string) (saltRet string, hashRet string, 
 	var salt string
 	var hash string
 	var err error
-	if salt, err = auth.GenerateSalt(); err != nil {
+	if salt, err = jwt.GenerateSalt(); err != nil {
 		return "", "", err
 	}
-	if hash, err = auth.GeneratePassHash(password, salt); err != nil {
+	if hash, err = jwt.GeneratePassHash(password, salt); err != nil {
 		return salt, "", err
 	}
 	return salt, hash, nil
@@ -202,7 +205,7 @@ func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
 			return http.StatusInternalServerError, nil, err
 		}
 		// generate token
-		tokenString, err := auth.GenerateToken(dbUser.UserID, rr.Mobile, 0)
+		tokenString, err := jwt.GenerateToken(dbUser.UserID, rr.Mobile, 0)
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
 		}

@@ -1,5 +1,5 @@
 //
-// @File:CertController
+// @File:CertBaseController
 // @Version:1.0.0
 // @Description:
 // @Author:jingpingxie
@@ -20,10 +20,10 @@ type encryptJson struct {
 	UID     string `json:"uid"`
 	Encrypt string `json:"encrypt"`
 }
-type ICertController interface {
+type ICertBaseController interface {
 	PreDecrypt() error
 }
-type CertController struct {
+type CertBaseController struct {
 	BaseController
 }
 
@@ -34,7 +34,7 @@ type CertController struct {
 // @Date:2022-08-09 10:11:53
 // @Receiver:cc
 //
-func (cc *CertController) PreDecrypt() error {
+func (cc *CertBaseController) PreDecrypt() error {
 	//读取数据 body处理
 	payload, err := cc.Ctx.GetRawData()
 	if err != nil {

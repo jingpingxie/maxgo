@@ -7,7 +7,7 @@
 //API接口TOKEN设计
 //https://blog.csdn.net/weixin_45070175/article/details/118559272
 //https://blog.51cto.com/u_11045899/5344518
-package auth
+package jwt
 
 import (
 	"crypto/rand"
@@ -17,13 +17,14 @@ import (
 	logs "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/scrypt"
 	"io"
+	"maxgo/constants/user"
 	"time"
 )
 
 // JWT : HEADER PAYLOAD SIGNATURE
 const (
 	SecretKEY              string = "JWT-Secret-Max-Go" //注意生产环境要修改SecretKEY
-	DEFAULT_EXPIRE_SECONDS int    = 600                 // default expired 10 minutes
+	DEFAULT_EXPIRE_SECONDS int    = user.DEFAULT_ACCOUNT_EXPIRE_SECONDS
 	PasswordHashBytes             = 16
 )
 

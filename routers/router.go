@@ -171,7 +171,7 @@ func match(path string, route Route) gin.HandlerFunc {
 			//arguments[0] = reflect.ValueOf(ctx) // *gin.Context
 			//route.Method.Call(arguments)
 			route.controller.SetContext(ctx)
-			certController, ok := route.controller.(base.ICertController)
+			certController, ok := route.controller.(base.ICertBaseController)
 			if ok {
 				//decrypt the request data first to encrypt api
 				certController.PreDecrypt()
