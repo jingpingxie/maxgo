@@ -12,10 +12,12 @@ import (
 	"fmt"
 	"github.com/go-redis/redis"
 	logs "github.com/sirupsen/logrus"
+	user2 "maxgo/common/user"
 	"maxgo/constants/redis_group"
 	"maxgo/constants/user"
 	"maxgo/services/rsa_cert"
 	"maxgo/tools/number"
+	"strconv"
 	"time"
 )
 
@@ -190,7 +192,7 @@ func GenerateDisposableRsaCert() (certKey string, certData *rsa_cert.RsaCert) {
 		return "", nil
 	}
 	//the cert data will out of date after DISPOSABLE_CERT_EXPIRE_SECONDS ms
-	err = ClientRedis.SetNX(string(redis_group.InstantCert)+":"+rsaCertData.UID, rsaCertData, time.Duration(user.DISPOSABLE_CERT_EXPIRE_SECONDS*1e9)).Err()
+	err = ClientRedis.SetNX(string(redis_group.DisposableCert)+":"+rsaCertData.UID, rsaCertData, time.Duration(user.DISPOSABLE_CERT_EXPIRE_SECONDS*1e9)).Err()
 	if err != nil {
 		logs.Error("set rsa cert data to redis")
 		return "", nil
@@ -209,10 +211,29 @@ func GenerateDisposableRsaCert() (certKey string, certData *rsa_cert.RsaCert) {
 //
 func GetDisposableRsaCert(uid string) (*rsa_cert.RsaCert, error) {
 	rsaCertData := &rsa_cert.RsaCert{}
-	err := ClientRedis.Get(string(redis_group.InstantCert) + ":" + uid).Scan(rsaCertData)
+	err := ClientRedis.Get(string(redis_group.DisposableCert) + ":" + uid).Scan(rsaCertData)
 	if err != nil {
 		logs.Error("maybe it is out of date for getting rsa cert data,")
 		return nil, err
 	}
 	return rsaCertData, err
+}
+
+func SaveUser(userID uint64, userRedis *user2.UserRedis) error {
+	err := ClientRedis.Set(string(redis_group.User)+":"+strconv.FormatUint(userID, 10), userRedis, time.Duration(user.DEFAULT_ACCOUNT_EXPIRE_SECONDS*1e9)).Err()
+	if err != nil {
+		logs.Error("set user info to redis")
+		return err
+	}
+	return nil
+}
+
+func GetUser(userID uint64) (*user2.UserRedis, error) {
+	userRedis := &user2.UserRedis{}
+	err := ClientRedis.Get(string(redis_group.User) + ":" + strconv.FormatUint(userID, 10)).Scan(userRedis)
+	if err != nil {
+		logs.Error("maybe it is out of date for getting user data,")
+		return nil, err
+	}
+	return userRedis, err
 }

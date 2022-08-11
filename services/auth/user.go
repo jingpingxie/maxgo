@@ -16,6 +16,7 @@ import (
 	"maxgo/tools/auth/jwt"
 	"maxgo/tools/snowflake"
 	"net/http"
+	"time"
 )
 
 type User struct {
@@ -68,6 +69,14 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
+	//用户登录信息保存到redis
+	redis_factory.SaveUser(dbUser.UserID, &user.UserRedis{
+		SID:      uid,
+		CID:      lr.CID,
+		TimeDiff: time.Now().Unix() - lr.CTIME,
+		UserID:   dbUser.UserID,
+		Mobile:   dbUser.Mobile,
+	})
 	return http.StatusOK, &user.UserResponse{
 		UserName: dbUser.UserName,
 		SID:      uid,
