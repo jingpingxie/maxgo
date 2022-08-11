@@ -24,7 +24,7 @@ import (
 // JWT : HEADER PAYLOAD SIGNATURE
 const (
 	SecretKEY              string = "JWT-Secret-Max-Go" //注意生产环境要修改SecretKEY
-	DEFAULT_EXPIRE_SECONDS int    = user.DEFAULT_ACCOUNT_EXPIRE_SECONDS
+	DEFAULT_EXPIRE_SECONDS int64  = user.DEFAULT_ACCOUNT_EXPIRE_SECONDS
 	PasswordHashBytes             = 16
 )
 
@@ -43,7 +43,7 @@ type JwtPayload struct {
 }
 
 // generate token
-func GenerateToken(userID uint64, mobile string, expiredSeconds int) (tokenString string, err error) {
+func GenerateToken(userID uint64, mobile string, expiredSeconds int64) (tokenString string, err error) {
 	if expiredSeconds == 0 {
 		expiredSeconds = DEFAULT_EXPIRE_SECONDS
 	}

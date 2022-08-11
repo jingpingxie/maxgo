@@ -8,8 +8,6 @@
 package auth
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"errors"
 	"maxgo/common/user"
 	"maxgo/models"
@@ -64,14 +62,15 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	// generate token
-	tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
+	//generate encrypt jwt token
+	//uid, tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
+	uid, _, err := generateToken(dbUser.UserID, dbUser.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 	return http.StatusOK, &user.UserResponse{
 		UserName: dbUser.UserName,
-		Token:    tokenString,
+		SID:      uid,
 	}, nil
 }
 
@@ -85,13 +84,38 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 // @Return:string
 // @Return:error
 //
-func generateToken(userID uint64, mobile string) (string, error) {
+func generateToken(userID uint64, mobile string) (uid string, encryptToken string, err error) {
 	tokenString, err := jwt.GenerateToken(userID, mobile, 0)
 	//generate rsa private key
-	uid, rsaCert := redis_factory.GetHourRsaCert()
+	uid, rsaCert := redis_factory.GenerateIntervalRsaCert()
+	encryptToken, err = rsaCert.Encrypt(tokenString)
+	return uid, encryptToken, err
+}
 
-	rsa.GenerateKey(rand.Reader, 2048)
-	return tokenString, err
+//
+// @Title:VerifyToken
+// @Description: verify logined user
+// @Author:jingpingxie
+// @Date:2022-08-10 17:28:32
+// @Param:uid
+// @Param:encryptToken
+// @Return:uint64
+// @Return:error
+//
+func VerifyToken(uid string, encryptToken string) (uint64, error) {
+	rsaCert, err := redis_factory.GetIntervalRsaCert(uid)
+	if err != nil {
+		return 0, errors.New("there is no suitable cert,maybe expired")
+	}
+	tokenString, err := rsaCert.Decrypt(encryptToken)
+	if err != nil {
+		return 0, errors.New("token is invalid")
+	}
+	jwtPayload, err := jwt.ValidateToken(tokenString)
+	if err != nil {
+		return 0, err
+	}
+	return jwtPayload.UserID, nil
 }
 
 //
@@ -176,8 +200,7 @@ func generateUserPasswordHash(password string) (saltRet string, hashRet string, 
 // @Return:*user.UserResponse
 // @Return:error
 //
-func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
-
+func DoRegister(rr *user.UserRequest) (int, *user.UserResponse, error) {
 	// get mobile and password
 	mobile := rr.Mobile
 	password := rr.Password
@@ -205,13 +228,13 @@ func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
 			return http.StatusInternalServerError, nil, err
 		}
 		// generate token
-		tokenString, err := jwt.GenerateToken(dbUser.UserID, rr.Mobile, 0)
+		uid, _, err := generateToken(dbUser.UserID, rr.Mobile)
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
 		return http.StatusOK, &user.UserResponse{
 			UserName: dbUser.UserName,
-			Token:    tokenString,
+			SID:      uid,
 		}, nil
 	}
 
@@ -237,12 +260,12 @@ func DoRegisterUser(rr *user.UserRequest) (int, *user.UserResponse, error) {
 	}
 
 	// generate token
-	tokenString, err := generateToken(userID, rr.Mobile)
+	uid, _, err := generateToken(userID, rr.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 	return http.StatusOK, &user.UserResponse{
+		SID:      uid,
 		UserName: rr.Mobile,
-		Token:    tokenString,
 	}, nil
 }

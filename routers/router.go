@@ -174,7 +174,10 @@ func match(path string, route Route) gin.HandlerFunc {
 			certController, ok := route.controller.(base.ICertBaseController)
 			if ok {
 				//decrypt the request data first to encrypt api
-				certController.PreDecrypt()
+				err := certController.PreDecrypt()
+				if err != nil {
+					return
+				}
 			}
 			route.Method.Call(nil)
 		}

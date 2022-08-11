@@ -12,8 +12,6 @@ import (
 	user2 "maxgo/common/user"
 	"maxgo/controllers/base"
 	"maxgo/routers"
-
-	//"maxgo/routers"
 	"maxgo/services/auth"
 	"net/http"
 )
@@ -47,7 +45,7 @@ func (uc *UserController) Post_Login() {
 		uc.Respond(uc.Ctx, statusCode, -200, err.Error())
 		return
 	}
-	uc.Ctx.Header("Authorization", lrs.Token) // set token into header
+	uc.Ctx.Header("Authorization", lrs.SID) // set token id into header
 	uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrs)
 }
 
@@ -65,7 +63,7 @@ func (uc *UserController) Post_Register() {
 		uc.Respond(uc.Ctx, http.StatusBadRequest, -100, err.Error(), nil)
 		return
 	}
-	statusCode, registerUser, err := auth.DoRegisterUser(ur)
+	statusCode, registerUser, err := auth.DoRegister(ur)
 	if err != nil {
 		uc.Respond(uc.Ctx, http.StatusBadRequest, statusCode, "", err.Error())
 		return

@@ -10,5 +10,6 @@ package redis_group
 type RedisGroup string
 
 const (
-	RsaCert RedisGroup = "RsaCert"
+	IntervalCert RedisGroup = "interval_cert"
+	InstantCert  RedisGroup = "instant_cert"
 )

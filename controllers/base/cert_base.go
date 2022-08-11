@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"maxgo/services/redis_factory"
 	"maxgo/tools/xstring"
+	"net/http"
 )
 
 type encryptJson struct {
@@ -45,15 +46,20 @@ func (cc *CertBaseController) PreDecrypt() error {
 	var requestData encryptJson
 	err = json.Unmarshal(payload, &requestData)
 	if err != nil {
-		logs.Error("unmarshal payload of %s error: %s", cc.Ctx.Request.URL.Path, err)
+		logs.Error("failed to unmarshal payload of %s error: %s", cc.Ctx.Request.URL.Path, err)
+		cc.Respond(cc.Ctx, http.StatusUnauthorized, -200, "failed to unmarshal payload")
 		return err
 	}
-	rsaCert, err := redis_factory.GetThrowRsaCert(requestData.UID)
+	rsaCert, err := redis_factory.GetDisposableRsaCert(requestData.UID)
 	if err != nil {
+		logs.Error("failed to get rsa cert, %s error: %s", cc.Ctx.Request.URL.Path, err)
+		cc.Respond(cc.Ctx, http.StatusUnauthorized, -200, "failed to get rsa cert")
 		return err
 	}
 	payloadText, err := rsaCert.Decrypt(requestData.Encrypt)
 	if err != nil {
+		logs.Error("failed to decrypt request data, %s error: %s", cc.Ctx.Request.URL.Path, err)
+		cc.Respond(cc.Ctx, http.StatusUnauthorized, -200, "failed to decrypt request data")
 		return err
 	}
 	if len(payloadText) > 0 {

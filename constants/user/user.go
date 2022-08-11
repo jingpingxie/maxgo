@@ -10,5 +10,6 @@ package user
 type User int
 
 const (
-	DEFAULT_ACCOUNT_EXPIRE_SECONDS int = 3600 //1 hour
+	DEFAULT_ACCOUNT_EXPIRE_SECONDS int64   = 3600 //3600s 1hour
+	DISPOSABLE_CERT_EXPIRE_SECONDS float64 = 3600 //0.5s
 )

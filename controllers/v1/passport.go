@@ -35,25 +35,25 @@ type PassportController struct {
 }
 
 //
-// @Title:Get_Login
+// @Title:Get_IntervalCertData
 // @Description:
 // @Author:jingpingxie
 // @Date:2022-08-07 14:16:27
 // @Receiver:uc
 //
-func (uc *PassportController) Get_HourCertData() {
-	uid, rsaCertData := redis_factory.GetHourRsaCert()
+func (uc *PassportController) Get_IntervalCertData() {
+	uid, rsaCertData := redis_factory.GenerateIntervalRsaCert()
 	uc.Respond(uc.Ctx, http.StatusOK, 0, "", map[string]string{"uid": uid, "cert": rsaCertData.PublicKey})
 }
 
 //
-// @Title:Get_ThrowCert
-// @Description: get throwaway cert data
+// @Title:Get_DisposableCert
+// @Description: get disposable cert data
 // @Author:jingpingxie
 // @Date:2022-08-09 08:50:08
 // @Receiver:uc
 //
-func (uc *PassportController) Get_ThrowCert() {
-	uid, rsaCertData := redis_factory.GenerateThrowRsaCert()
+func (uc *PassportController) Get_DisposableCert() {
+	uid, rsaCertData := redis_factory.GenerateDisposableRsaCert()
 	uc.Respond(uc.Ctx, http.StatusOK, 0, "", map[string]string{"uid": uid, "cert": rsaCertData.PublicKey})
 }

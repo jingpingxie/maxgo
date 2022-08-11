@@ -5,7 +5,7 @@
 // @Author:jingpingxie
 // @Date:2022/8/7 14:44
 //
-package auth
+package rsa_cert
 
 import (
 	"crypto/md5"
@@ -23,16 +23,40 @@ import (
 var _ encoding.BinaryMarshaler = new(RsaCert)
 var _ encoding.BinaryUnmarshaler = new(RsaCert)
 
+//
+// @Title:RsaCert
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:31:19
+//
 type RsaCert struct {
 	UID        string `json:"key"`
 	PrivateKey string `json:"private_key"`
 	PublicKey  string `json:"public_key"`
 }
 
+//
+// @Title:MarshalBinary
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:31:13
+// @Receiver:rc
+// @Return:data
+// @Return:err
+//
 func (rc *RsaCert) MarshalBinary() (data []byte, err error) {
 	return json.Marshal(rc)
 }
 
+//
+// @Title:UnmarshalBinary
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:31:11
+// @Receiver:rc
+// @Param:data
+// @Return:error
+//
 func (rc *RsaCert) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, rc)
 
@@ -85,4 +109,46 @@ func (rc *RsaCert) Generate() error {
 //
 func (rc *RsaCert) Decrypt(cipherText string) (string, error) {
 	return xrsa.RsaDecrypt(rc.PrivateKey, cipherText)
+}
+
+//
+// @Title:Encrypt
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:30:56
+// @Receiver:rc
+// @Param:plainText
+// @Return:string
+// @Return:error
+//
+func (rc *RsaCert) Encrypt(plainText string) (string, error) {
+	return xrsa.RsaEncrypt(rc.PublicKey, plainText)
+}
+
+//
+// @Title:Sign
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:30:59
+// @Receiver:rc
+// @Param:plainText
+// @Return:string
+// @Return:error
+//
+func (rc *RsaCert) Sign(plainText string) (string, error) {
+	return xrsa.RsaSignWithSha256(rc.PrivateKey, plainText)
+}
+
+//
+// @Title:Verify
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:31:02
+// @Receiver:rc
+// @Param:plainText
+// @Param:signedText
+// @Return:bool
+//
+func (rc *RsaCert) Verify(plainText string, signedText string) bool {
+	return xrsa.RsaVerySignWithSha256(rc.PublicKey, plainText, signedText)
 }

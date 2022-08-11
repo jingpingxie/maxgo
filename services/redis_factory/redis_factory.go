@@ -12,7 +12,10 @@ import (
 	"fmt"
 	"github.com/go-redis/redis"
 	logs "github.com/sirupsen/logrus"
-	"maxgo/services/auth"
+	"maxgo/constants/redis_group"
+	"maxgo/constants/user"
+	"maxgo/services/rsa_cert"
+	"maxgo/tools/number"
 	"time"
 )
 
@@ -123,51 +126,71 @@ func Zset() {
 }
 
 //
-// @Title:GetHourRsaCert
-// @Description: get rsa cert data,the cert data should change per hour to prevent compromised
+// @Title:GenerateIntervalRsaCert
+// @Description: get rsa cert data,the cert data should be changed interval to prevent compromised
 // @Author:jingpingxie
 // @Date:2022-08-07 21:31:19
 // @Receiver:rf
 //
-func GetHourRsaCert() (string, *auth.RsaCert) {
-	now := time.Now()
-	hourTime := now.Format("2006010215") //round hour
-	rsaCertKey := fmt.Sprintf("%x", md5.Sum([]byte(hourTime)))
-	rsaCertData := &auth.RsaCert{}
-	err := ClientRedis.Get(rsaCertKey).Scan(rsaCertData)
+func GenerateIntervalRsaCert() (string, *rsa_cert.RsaCert) {
+	now := time.Now().Unix()
+	now -= now % user.DEFAULT_ACCOUNT_EXPIRE_SECONDS
+	nowBytes := number.Int64ToBytes(now)
+	uid := fmt.Sprintf("%x", md5.Sum(nowBytes))
+	rsaCertData := &rsa_cert.RsaCert{}
+	err := ClientRedis.Get(uid).Scan(rsaCertData)
 	if err != nil {
 		//if without the cert data, generate new cert data
-		rsaCertData = &auth.RsaCert{}
+		rsaCertData = &rsa_cert.RsaCert{}
 		err = rsaCertData.Generate()
 		if err != nil {
 			return "", nil
 		}
-		err = ClientRedis.SetNX(rsaCertKey, rsaCertData, time.Hour).Err()
+		//失效时间的2倍，以保证足够的时间使用
+		err = ClientRedis.SetNX(string(redis_group.IntervalCert)+":"+uid, rsaCertData, time.Duration(user.DEFAULT_ACCOUNT_EXPIRE_SECONDS*1e9*2)).Err()
 		if err != nil {
 			logs.Error("set rsa cert data to redis")
 			return "", nil
 		}
 	}
-	return rsaCertKey, rsaCertData
+	return uid, rsaCertData
 }
 
 //
-// @Title:GenerateThrowRsaCert
+// @Title:GetIntervalRsaCert
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:33:00
+// @Param:uid
+// @Return:*auth.RsaCert
+// @Return:error
+//
+func GetIntervalRsaCert(uid string) (*rsa_cert.RsaCert, error) {
+	rsaCertData := &rsa_cert.RsaCert{}
+	err := ClientRedis.Get(string(redis_group.IntervalCert) + ":" + uid).Scan(rsaCertData)
+	if err != nil {
+		return nil, err
+	}
+	return rsaCertData, nil
+}
+
+//
+// @Title:GenerateDisposableRsaCert
 // @Description:
 // @Author:jingpingxie
 // @Date:2022-08-09 09:36:20
 // @Return:certKey
 // @Return:certData
 //
-func GenerateThrowRsaCert() (certKey string, certData *auth.RsaCert) {
+func GenerateDisposableRsaCert() (certKey string, certData *rsa_cert.RsaCert) {
 	//generate new cert data
-	rsaCertData := &auth.RsaCert{}
+	rsaCertData := &rsa_cert.RsaCert{}
 	err := rsaCertData.Generate()
 	if err != nil {
 		return "", nil
 	}
-	//the cert data will out of date after 5 seconds
-	err = ClientRedis.SetNX(rsaCertData.UID, rsaCertData, time.Second*5).Err()
+	//the cert data will out of date after DISPOSABLE_CERT_EXPIRE_SECONDS ms
+	err = ClientRedis.SetNX(string(redis_group.InstantCert)+":"+rsaCertData.UID, rsaCertData, time.Duration(user.DISPOSABLE_CERT_EXPIRE_SECONDS*1e9)).Err()
 	if err != nil {
 		logs.Error("set rsa cert data to redis")
 		return "", nil
@@ -176,7 +199,7 @@ func GenerateThrowRsaCert() (certKey string, certData *auth.RsaCert) {
 }
 
 //
-// @Title:GetThrowRsaCert
+// @Title:GetDisposableRsaCert
 // @Description:
 // @Author:jingpingxie
 // @Date:2022-08-09 09:36:16
@@ -184,9 +207,9 @@ func GenerateThrowRsaCert() (certKey string, certData *auth.RsaCert) {
 // @Return:*auth.RsaCert
 // @Return:error
 //
-func GetThrowRsaCert(uid string) (*auth.RsaCert, error) {
-	rsaCertData := &auth.RsaCert{}
-	err := ClientRedis.Get(uid).Scan(rsaCertData)
+func GetDisposableRsaCert(uid string) (*rsa_cert.RsaCert, error) {
+	rsaCertData := &rsa_cert.RsaCert{}
+	err := ClientRedis.Get(string(redis_group.InstantCert) + ":" + uid).Scan(rsaCertData)
 	if err != nil {
 		logs.Error("maybe it is out of date for getting rsa cert data,")
 		return nil, err
