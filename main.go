@@ -10,7 +10,8 @@ package main
 import (
 	logs "github.com/sirupsen/logrus"
 	_ "maxgo/controllers/v1"
-	_ "maxgo/controllers/v1/cert"
+	_ "maxgo/controllers/v1/disposable_cert"
+	_ "maxgo/controllers/v1/interval_cert"
 	"maxgo/routers"
 	"maxgo/services"
 	"os"

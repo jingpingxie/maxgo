@@ -5,7 +5,7 @@
 // @Author:jingpingxie
 // @Date:2022/8/6 13:58
 //
-package cert
+package disposable_cert
 
 import (
 	logs "github.com/sirupsen/logrus"
@@ -21,7 +21,7 @@ func init() {
 }
 
 type UserController struct {
-	base.CertBaseController
+	base.DisposableCertBaseController
 }
 
 //
@@ -40,13 +40,15 @@ func (uc *UserController) Post_Login() {
 	}
 
 	logs.Info("account:%s password:%s is login", lr.Account, lr.Password)
-	statusCode, lrs, err := auth.DoLogin(lr)
+	statusCode, lrt, err := auth.DoLogin(lr)
 	if err != nil {
 		uc.Respond(uc.Ctx, statusCode, -200, err.Error())
 		return
 	}
-	uc.Ctx.Header("Authorization", lrs.SID) // set token id into header
-	uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrs)
+	uc.Ctx.Header("Authorization", lrt.Token)
+	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
+	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
+	uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrt.UserResponse)
 }
 
 //
@@ -63,10 +65,13 @@ func (uc *UserController) Post_Register() {
 		uc.Respond(uc.Ctx, http.StatusBadRequest, -100, err.Error(), nil)
 		return
 	}
-	statusCode, registerUser, err := auth.DoRegister(ur)
+	statusCode, lrt, err := auth.DoRegister(ur)
 	if err != nil {
 		uc.Respond(uc.Ctx, http.StatusBadRequest, statusCode, "", err.Error())
 		return
 	}
-	uc.Respond(uc.Ctx, http.StatusOK, 0, "", registerUser)
+	uc.Ctx.Header("Authorization", lrt.Token)
+	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
+	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
+	uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrt.UserResponse)
 }

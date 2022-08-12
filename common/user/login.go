@@ -23,3 +23,20 @@ type LoginRequest struct {
 	Account  string `json:"account"`
 	Password string `json:"password"`
 }
+
+//
+// @Title:LoginResponse
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:33:33
+//
+type LoginResponse struct {
+	UserName string `json:"user_name"`
+}
+
+type LoginResult struct {
+	UserResponse LoginResponse
+	RsaCertKey   string `json:"rsa_key"`
+	RsaPublicKey string `json:"rsa_public"`
+	Token        string `json:"token"`
+}

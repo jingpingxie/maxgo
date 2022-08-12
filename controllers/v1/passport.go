@@ -42,8 +42,8 @@ type PassportController struct {
 // @Receiver:uc
 //
 func (uc *PassportController) Get_IntervalCertData() {
-	uid, rsaCertData := redis_factory.GenerateIntervalRsaCert()
-	uc.Respond(uc.Ctx, http.StatusOK, 0, "", map[string]string{"uid": uid, "cert": rsaCertData.PublicKey})
+	rsaCertKey, rsaCertData := redis_factory.GenerateIntervalRsaCert()
+	uc.Respond(uc.Ctx, http.StatusOK, 0, "", map[string]string{"certKey": rsaCertKey, "publicKey": rsaCertData.PublicKey})
 }
 
 //
@@ -54,6 +54,6 @@ func (uc *PassportController) Get_IntervalCertData() {
 // @Receiver:uc
 //
 func (uc *PassportController) Get_DisposableCert() {
-	uid, rsaCertData := redis_factory.GenerateDisposableRsaCert()
-	uc.Respond(uc.Ctx, http.StatusOK, 0, "", map[string]string{"uid": uid, "cert": rsaCertData.PublicKey})
+	rsaCertKey, rsaCertData := redis_factory.GenerateDisposableRsaCert()
+	uc.Respond(uc.Ctx, http.StatusOK, 0, "", map[string]string{"certKey": rsaCertKey, "publicKey": rsaCertData.PublicKey})
 }

@@ -1,9 +1,9 @@
 //
-// @File:CertBaseController
+// @File:cert_base
 // @Version:1.0.0
 // @Description:
 // @Author:jingpingxie
-// @Date:2022/8/9 10:09
+// @Date:2022/8/12 9:13
 //
 package base
 
@@ -12,60 +12,101 @@ import (
 	"encoding/json"
 	logs "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"maxgo/services/redis_factory"
+	"maxgo/services/rsa_cert"
 	"maxgo/tools/xstring"
 	"net/http"
 )
 
-type encryptJson struct {
-	UID     string `json:"uid"`
-	Encrypt string `json:"encrypt"`
-}
+//
+// @Title:ICertBaseController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 10:32:47
+//
 type ICertBaseController interface {
 	PreDecrypt() error
+	GetRsaCert(rsaCertKey string) (rsaCertData *rsa_cert.RsaCert, err error)
 }
+
+//
+// @Title:CertBaseController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 10:32:50
+//
 type CertBaseController struct {
 	BaseController
 }
 
 //
-// @Title:PreDecrypt
-// @Description: decrypt the request body before api called
+// @Title:DoPreDecrypt
+// @Description:对加密请求进行解密的预处理
 // @Author:jingpingxie
-// @Date:2022-08-09 10:11:53
+// @Date:2022-08-12 10:31:41
 // @Receiver:cc
+// @Param:icb
+// @Return:error
 //
-func (cc *CertBaseController) PreDecrypt() error {
-	//读取数据 body处理
-	payload, err := cc.Ctx.GetRawData()
+func (bc *BaseController) DoPreDecrypt(icb ICertBaseController) error {
+	//read body data
+	requestData, err := bc.Ctx.GetRawData()
 	if err != nil {
+		logs.Error("failed to get rawData of %s error: %s", bc.Ctx.Request.URL.Path, err)
+		bc.Respond(bc.Ctx, http.StatusBadRequest, -200, "failed to get rawData")
 		return err
 	}
-	///解密body数据 请求的json是{"encryptString":{value}} value含有gcm的12字节nonce,实际长度大于32
-	//{"uid":"c2dae63cc88f7c1dbafde6c8365145ff","encrypt":"HXdSB//hadVu26piFfssVWtUjadjrgIrTLCB/4s9r4A6CltnDivTV2HnBN8JuZes89n2OJZckx5MhJCRQnPxbl6LoV/TJ/5osFOBiwbyVq9aEuzmhAZcwFh7ShkSg9VCwlFRiQJfVU8jm7Zh6CHz/nLcUBLdbAK+RYqVRcIZP853qZ/7xRZ5jaCBg153K1Ipz7dHPS7CO+vI5Fm0p4YcLqtUBZ0BnOdkKnM0r1vylT5GUCFnQSYB+DxpF1ZfzosffyofYi/WyRaSEruDNPd5QBRwHScWcLjBd6p5sFpSBu4JA7XfwSJiX7FEY4vO4yrlxD/S9UWhRl0RcXPFqV4ssw=="}
-	var requestData encryptJson
-	err = json.Unmarshal(payload, &requestData)
+	requestMap := make(map[string]interface{})
+	err = json.Unmarshal(requestData, &requestMap)
 	if err != nil {
-		logs.Error("failed to unmarshal payload of %s error: %s", cc.Ctx.Request.URL.Path, err)
-		cc.Respond(cc.Ctx, http.StatusUnauthorized, -200, "failed to unmarshal payload")
+		logs.Error("failed to unmarshal rawData of %s error: %s", bc.Ctx.Request.URL.Path, err)
+		bc.Respond(bc.Ctx, http.StatusUnauthorized, -300, "failed to unmarshal rawData")
 		return err
 	}
-	rsaCert, err := redis_factory.GetDisposableRsaCert(requestData.UID)
-	if err != nil {
-		logs.Error("failed to get rsa cert, %s error: %s", cc.Ctx.Request.URL.Path, err)
-		cc.Respond(cc.Ctx, http.StatusUnauthorized, -200, "failed to get rsa cert")
+	if requestMap["cert_key"] == nil {
+		logs.Error("no cert_key provided of %s error: %s", bc.Ctx.Request.URL.Path, err)
+		bc.Respond(bc.Ctx, http.StatusUnauthorized, -400, "no cert_key provided")
 		return err
 	}
-	payloadText, err := rsaCert.Decrypt(requestData.Encrypt)
-	if err != nil {
-		logs.Error("failed to decrypt request data, %s error: %s", cc.Ctx.Request.URL.Path, err)
-		cc.Respond(cc.Ctx, http.StatusUnauthorized, -200, "failed to decrypt request data")
+	if requestMap["encrypt"] == nil {
+		logs.Error("no encrypt data provided of %s error: %s", bc.Ctx.Request.URL.Path, err)
+		bc.Respond(bc.Ctx, http.StatusUnauthorized, -500, "no encrypt data provided")
 		return err
 	}
-	if len(payloadText) > 0 {
-		payloadText = xstring.StringStrip(payloadText)
-		payload = []byte(payloadText)
-		cc.Ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(payload))
+	rsaCert, err := icb.GetRsaCert(requestMap["cert_key"].(string))
+	if err != nil {
+		logs.Error("failed to get rsa cert, %s error: %s", bc.Ctx.Request.URL.Path, err)
+		bc.Respond(bc.Ctx, http.StatusUnauthorized, -600, "failed to get rsa cert")
+		return err
+	}
+	delete(requestMap, "cert_key")
+	decryptRequestText, err := rsaCert.Decrypt(requestMap["encrypt"].(string))
+	if err != nil {
+		logs.Error("failed to decrypt request data, %s error: %s", bc.Ctx.Request.URL.Path, err)
+		bc.Respond(bc.Ctx, http.StatusUnauthorized, -700, "failed to decrypt request data")
+		return err
+	}
+	delete(requestMap, "encrypt")
+	if len(decryptRequestText) > 0 {
+		decryptRequestText = xstring.StringStrip(decryptRequestText)
+		decryptRequestData := []byte(decryptRequestText)
+		decryptRequestMap := make(map[string]interface{})
+		err = json.Unmarshal(decryptRequestData, &decryptRequestMap)
+		if err != nil {
+			logs.Error("failed to unmarshal decryptRequestData of %s error: %s", bc.Ctx.Request.URL.Path, err)
+			bc.Respond(bc.Ctx, http.StatusUnauthorized, -800, "failed to unmarshal decryptRequestData")
+			return err
+		}
+		//merge decryptRequestMap and requestMap
+		for k, v := range decryptRequestMap {
+			requestMap[k] = v
+		}
+		requestData, err = json.Marshal(requestMap)
+		if err != nil {
+			logs.Error("failed to marshal requestMap of %s error: %s", bc.Ctx.Request.URL.Path, err)
+			bc.Respond(bc.Ctx, http.StatusUnauthorized, -900, "failed to marshal requestMap")
+			return err
+		}
+		bc.Ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(requestData))
 	}
 	return nil
 }

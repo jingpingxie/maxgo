@@ -5,7 +5,7 @@
 // @Author:jingpingxie
 // @Date:2022/8/9 13:01
 //
-package v1
+package interval_cert
 
 import (
 	"maxgo/controllers/base"
@@ -17,12 +17,32 @@ func init() {
 }
 
 type UserController struct {
-	base.BaseController
+	base.IntervalCertBaseController
 }
 
-//post请求一般是对服务器的数据做改变，常用来数据的提交，新增操作
+//
+// @Title:Post_Logout
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-11 14:43:14
+// @Receiver:uc
+//
 func (uc *UserController) Post_Logout() {
-
+	//lr := new(user2.LogoutRequest)
+	//if err := uc.Ctx.ShouldBind(lr); err != nil {
+	//	logs.Error("unmarshal payload of %s error: %s", uc.Ctx.Request.URL.Path, err)
+	//	uc.Respond(uc.Ctx, http.StatusBadRequest, -100, err.Error())
+	//	return
+	//}
+	//statusCode, sid, cert, lrs, err := auth.DoLogout(lr)
+	//if err != nil {
+	//	uc.Respond(uc.Ctx, statusCode, -200, err.Error())
+	//	return
+	//}
+	//uc.Ctx.Header("Authorization", sid) // set token id into header
+	//uc.Ctx.Header("Cert", cert)         // set token id into header
+	//logs.Info(cert)
+	//uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrs)
 }
 
 //get请求其实本身HTTP协议并没有限制它的URL大小，但是不同的浏览器对其有不同的大小长度限制

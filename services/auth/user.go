@@ -29,10 +29,10 @@ type User struct {
 // @Date:2022-08-04 12:47:12
 // @Param:lr
 // @Return:int
-// @Return:*login.UserResponse
+// @Return:*login.LoginResponse
 // @Return:error
 //
-func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
+func DoLogin(lr *user.LoginRequest) (httpStatus int, lrt *user.LoginResult, err error) {
 	// get username and password
 	account := lr.Account
 	password := lr.Password
@@ -52,8 +52,6 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 		return http.StatusUnauthorized, nil, errors.New("error: user is not existing")
 	}
 
-	var err error
-
 	// check the password
 	if err = checkUserPassword(password, dbUser.Password, dbUser.Salt); err != nil {
 		return http.StatusUnauthorized, nil, err
@@ -64,23 +62,26 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 	}
 
 	//generate encrypt jwt token
-	//uid, tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
-	uid, _, err := generateToken(dbUser.UserID, dbUser.Mobile)
+	//rsaCertKey, tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
+	rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(dbUser.UserID, dbUser.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 	//用户登录信息保存到redis
 	redis_factory.SaveUser(dbUser.UserID, &user.UserRedis{
-		SID:      uid,
+		SID:      rsaCertKey,
 		CID:      lr.CID,
 		TimeDiff: time.Now().Unix() - lr.CTIME,
 		UserID:   dbUser.UserID,
 		Mobile:   dbUser.Mobile,
 	})
-	return http.StatusOK, &user.UserResponse{
-		UserName: dbUser.UserName,
-		SID:      uid,
-	}, nil
+	lrt = &user.LoginResult{
+		UserResponse: user.LoginResponse{UserName: dbUser.UserName},
+		RsaCertKey:   rsaCertKey,
+		RsaPublicKey: rsaPublicKey,
+		Token:        encryptToken,
+	}
+	return http.StatusOK, lrt, nil
 }
 
 //
@@ -93,12 +94,18 @@ func DoLogin(lr *user.LoginRequest) (int, *user.UserResponse, error) {
 // @Return:string
 // @Return:error
 //
-func generateToken(userID uint64, mobile string) (uid string, encryptToken string, err error) {
+func generateToken(userID uint64, mobile string) (rsaCertKey string, rsaPublicKey string, encryptToken string, err error) {
 	tokenString, err := jwt.GenerateToken(userID, mobile, 0)
+	if err != nil {
+		return "", "", "", errors.New("failed to generate jwt token")
+	}
 	//generate rsa private key
-	uid, rsaCert := redis_factory.GenerateIntervalRsaCert()
+	rsaCertKey, rsaCert := redis_factory.GenerateIntervalRsaCert()
+	if rsaCert == nil {
+		return "", "", "", errors.New("failed to get interval rsa cert")
+	}
 	encryptToken, err = rsaCert.Encrypt(tokenString)
-	return uid, encryptToken, err
+	return rsaCertKey, rsaCert.PublicKey, encryptToken, err
 }
 
 //
@@ -206,10 +213,10 @@ func generateUserPasswordHash(password string) (saltRet string, hashRet string, 
 // @Date:2022-08-04 14:49:41
 // @Param:rr
 // @Return:int
-// @Return:*user.UserResponse
+// @Return:*user.LoginResponse
 // @Return:error
 //
-func DoRegister(rr *user.UserRequest) (int, *user.UserResponse, error) {
+func DoRegister(rr *user.UserRequest) (httpStatus int, lrt *user.LoginResult, err error) {
 	// get mobile and password
 	mobile := rr.Mobile
 	password := rr.Password
@@ -221,8 +228,6 @@ func DoRegister(rr *user.UserRequest) (int, *user.UserResponse, error) {
 	if len(password) == 0 {
 		return http.StatusBadRequest, nil, errors.New("error: password is empty")
 	}
-	var err error
-
 	// check the username if existing
 	var dbUser models.User
 	services.Db.Raw("select user_id,user_name,salt,password from user where mobile = ?", mobile).Scan(&dbUser)
@@ -237,14 +242,17 @@ func DoRegister(rr *user.UserRequest) (int, *user.UserResponse, error) {
 			return http.StatusInternalServerError, nil, err
 		}
 		// generate token
-		uid, _, err := generateToken(dbUser.UserID, rr.Mobile)
+		rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(dbUser.UserID, rr.Mobile)
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
-		return http.StatusOK, &user.UserResponse{
-			UserName: dbUser.UserName,
-			SID:      uid,
-		}, nil
+		lrt = &user.LoginResult{
+			UserResponse: user.LoginResponse{UserName: dbUser.UserName},
+			RsaCertKey:   rsaCertKey,
+			RsaPublicKey: rsaPublicKey,
+			Token:        encryptToken,
+		}
+		return http.StatusOK, lrt, nil
 	}
 
 	//generate salt and password hash
@@ -269,12 +277,64 @@ func DoRegister(rr *user.UserRequest) (int, *user.UserResponse, error) {
 	}
 
 	// generate token
-	uid, _, err := generateToken(userID, rr.Mobile)
+	rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(userID, rr.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-	return http.StatusOK, &user.UserResponse{
-		SID:      uid,
-		UserName: rr.Mobile,
-	}, nil
+	lrt = &user.LoginResult{
+		UserResponse: user.LoginResponse{UserName: rr.Mobile},
+		RsaCertKey:   rsaCertKey,
+		RsaPublicKey: rsaPublicKey,
+		Token:        encryptToken,
+	}
+	return http.StatusOK, lrt, nil
+}
+
+func DoLogout(lr *user.LogoutRequest) (httpStatus int, ur *user.LoginResponse, err error) {
+	//// get username and password
+	//account := lr.Account
+	//password := lr.Password
+	//
+	////validate username and password if is empty
+	//if len(account) == 0 {
+	//	return http.StatusBadRequest, "", "", nil, errors.New("error: username is empty")
+	//}
+	//if len(password) == 0 {
+	//	return http.StatusBadRequest, "", "", nil, errors.New("error: password is empty")
+	//}
+	//
+	//// check the username if existing
+	//var dbUser models.User
+	//services.Db.Raw("select user_id,user_name,salt,password from user where mobile = ? or email=?", account, account).Scan(&dbUser)
+	//if dbUser.UserID == 0 {
+	//	return http.StatusUnauthorized, "", "", nil, errors.New("error: user is not existing")
+	//}
+	//
+	//// check the password
+	//if err = checkUserPassword(password, dbUser.Password, dbUser.Salt); err != nil {
+	//	return http.StatusUnauthorized, "", "", nil, err
+	//}
+	////generate new salt and password hash
+	//if err = updateUserPassword(dbUser.UserID, password); err != nil {
+	//	return http.StatusInternalServerError, "", "", nil, err
+	//}
+	//
+	////generate encrypt jwt token
+	////rsaCertKey, tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
+	//rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(dbUser.UserID, dbUser.Mobile)
+	//if err != nil {
+	//	return http.StatusInternalServerError, "", "", nil, err
+	//}
+	////用户登录信息保存到redis
+	//redis_factory.SaveUser(dbUser.UserID, &user.UserRedis{
+	//	SID:      rsaCertKey,
+	//	CID:      lr.CID,
+	//	TimeDiff: time.Now().Unix() - lr.CTIME,
+	//	UserID:   dbUser.UserID,
+	//	Mobile:   dbUser.Mobile,
+	//})
+	//return http.StatusOK, rsaCertKey, rsaPublicKey, &user.LoginResponse{
+	//	UserName: dbUser.UserName,
+	//}, nil
+	return 0, nil, nil
 }
