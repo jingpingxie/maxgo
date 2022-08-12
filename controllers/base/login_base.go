@@ -18,14 +18,36 @@ import (
 	"time"
 )
 
+//
+// @Title:ILoginBaseController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:30:36
+//
 type ILoginBaseController interface {
 	CheckUser(requestMap map[string]interface{}) error
 }
+
+//
+// @Title:LoginBaseController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:30:39
+//
 type LoginBaseController struct {
 	IntervalCertBaseController
 	LoginUserInfo *user.UserRedis
 }
 
+//
+// @Title:CheckUser
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:30:42
+// @Receiver:lbc
+// @Param:requestMap
+// @Return:error
+//
 func (lbc *LoginBaseController) CheckUser(requestMap map[string]interface{}) error {
 	token := requestMap["token"].(string)
 	if len(token) == 0 {

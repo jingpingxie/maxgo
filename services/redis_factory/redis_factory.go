@@ -223,6 +223,15 @@ func GetDisposableRsaCert(rsaCertKey string) (rsaCertData *rsa_cert.RsaCert, err
 	return rsaCertData, err
 }
 
+//
+// @Title:SaveUser
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:34:37
+// @Param:userID
+// @Param:userRedis
+// @Return:error
+//
 func SaveUser(userID uint64, userRedis *user2.UserRedis) error {
 	err := ClientRedis.Set(string(redis_group.User)+":"+strconv.FormatUint(userID, 10), userRedis, time.Duration(user.DEFAULT_ACCOUNT_EXPIRE_SECONDS*1e9)).Err()
 	if err != nil {
@@ -232,6 +241,15 @@ func SaveUser(userID uint64, userRedis *user2.UserRedis) error {
 	return nil
 }
 
+//
+// @Title:GetUser
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:34:35
+// @Param:userID
+// @Return:*user2.UserRedis
+// @Return:error
+//
 func GetUser(userID uint64) (*user2.UserRedis, error) {
 	userRedis := &user2.UserRedis{}
 	err := ClientRedis.Get(string(redis_group.User) + ":" + strconv.FormatUint(userID, 10)).Scan(userRedis)
@@ -242,6 +260,14 @@ func GetUser(userID uint64) (*user2.UserRedis, error) {
 	return userRedis, err
 }
 
+//
+// @Title:DeleteUser
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:34:31
+// @Param:userID
+// @Return:error
+//
 func DeleteUser(userID uint64) error {
 	err := ClientRedis.Del(string(redis_group.User) + ":" + strconv.FormatUint(userID, 10)).Err()
 	if err != nil {

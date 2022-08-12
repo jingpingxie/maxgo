@@ -5,7 +5,7 @@
 // @Author:jingpingxie
 // @Date:2022/8/6 14:39
 //
-package json_utils
+package xjson
 
 import (
 	"encoding/json"

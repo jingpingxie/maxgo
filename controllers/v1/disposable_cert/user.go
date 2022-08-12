@@ -20,6 +20,12 @@ func init() {
 	routers.Register(&UserController{})
 }
 
+//
+// @Title:UserController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:30:56
+//
 type UserController struct {
 	base.DisposableCertBaseController
 }

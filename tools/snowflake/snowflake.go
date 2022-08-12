@@ -23,6 +23,12 @@ const (
 	timestampShift    = sequenceBits + workerIdBits + datacenterIdBits // 时间戳左移位数
 )
 
+//
+// @Title:Snowflake
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:35:33
+//
 type Snowflake struct {
 	sync.Mutex
 	timestamp    int64

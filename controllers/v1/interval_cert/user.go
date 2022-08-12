@@ -18,6 +18,12 @@ func init() {
 	routers.Register(&UserController{})
 }
 
+//
+// @Title:UserController
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:31:06
+//
 type UserController struct {
 	base.LoginBaseController
 }

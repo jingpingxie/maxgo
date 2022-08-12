@@ -22,9 +22,6 @@ import (
 	"time"
 )
 
-type User struct {
-}
-
 //
 // @Title:DoLogin
 // @Description: do user login
@@ -85,6 +82,16 @@ func DoLogin(lr *user.LoginRequest, clientIP string) (httpStatus int, lrt *user.
 	}
 	return http.StatusOK, lrt, nil
 }
+
+//
+// @Title:DoLogout
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:33:04
+// @Param:loginUser
+// @Return:httpStatus
+// @Return:err
+//
 func DoLogout(loginUser *user.UserRedis) (httpStatus int, err error) {
 	err = redis_factory.DeleteUser(loginUser.UserID)
 	if err != nil {
@@ -96,6 +103,18 @@ func DoLogout(loginUser *user.UserRedis) (httpStatus int, err error) {
 	}
 	return http.StatusOK, nil
 }
+
+//
+// @Title:saveAndUpdateLoginUserInfo
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:32:44
+// @Param:userID
+// @Param:password
+// @Param:clientIP
+// @Param:userRedis
+// @Return:err
+//
 func saveAndUpdateLoginUserInfo(userID uint64, password string, clientIP string, userRedis *user.UserRedis) (err error) {
 	//generate new salt and password hash
 	err = updateUserPassword(userID, password)
@@ -116,6 +135,16 @@ func saveAndUpdateLoginUserInfo(userID uint64, password string, clientIP string,
 	return nil
 }
 
+//
+// @Title:createVisitInfo
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:32:51
+// @Param:userID
+// @Param:clientIP
+// @Return:userVisitID
+// @Return:err
+//
 func createVisitInfo(userID uint64, clientIP string) (userVisitID uint64, err error) {
 	//insert user info into db
 	userVisitID, err = snowflake.GenerateSnowflakeId()
@@ -134,6 +163,15 @@ func createVisitInfo(userID uint64, clientIP string) (userVisitID uint64, err er
 	}
 	return userVisitID, nil
 }
+
+//
+// @Title:updateLogoutInfo
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:32:39
+// @Param:userVisitID
+// @Return:err
+//
 func updateLogoutInfo(userVisitID uint64) (err error) {
 	if err = services.Db.Model(&models.UserVisit{}).Where("user_visit_id = ?", userVisitID).Updates(models.UserVisit{LogoutTime: time.Now()}).Error; err != nil {
 		return errors.New("update user visit logout time," + err.Error())
@@ -163,32 +201,6 @@ func generateToken(userID uint64, mobile string) (rsaCertKey string, rsaPublicKe
 	}
 	encryptToken, err = rsaCert.Encrypt(tokenString)
 	return rsaCertKey, rsaCert.PublicKey, encryptToken, err
-}
-
-//
-// @Title:VerifyToken
-// @Description: verify logined user
-// @Author:jingpingxie
-// @Date:2022-08-10 17:28:32
-// @Param:uid
-// @Param:encryptToken
-// @Return:uint64
-// @Return:error
-//
-func VerifyToken(uid string, encryptToken string) (uint64, error) {
-	rsaCert, err := redis_factory.GetIntervalRsaCert(uid)
-	if err != nil {
-		return 0, errors.New("there is no suitable cert,maybe expired")
-	}
-	tokenString, err := rsaCert.Decrypt(encryptToken)
-	if err != nil {
-		return 0, errors.New("token is invalid")
-	}
-	jwtPayload, err := jwt.ValidateToken(tokenString)
-	if err != nil {
-		return 0, err
-	}
-	return jwtPayload.UserID, nil
 }
 
 //
