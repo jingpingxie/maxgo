@@ -9,7 +9,6 @@ package disposable_cert
 
 import (
 	logs "github.com/sirupsen/logrus"
-	user2 "maxgo/common/user"
 	"maxgo/controllers/base"
 	"maxgo/routers"
 	"maxgo/services/auth"
@@ -38,7 +37,7 @@ type UserController struct {
 // @Receiver:uc
 //
 func (uc *UserController) Post_Login() {
-	lr := new(user2.LoginRequest)
+	lr := new(auth.LoginRequest)
 	if err := uc.Ctx.ShouldBind(lr); err != nil {
 		logs.Error("unmarshal payload of %s error: %s", uc.Ctx.Request.URL.Path, err)
 		uc.Respond(http.StatusBadRequest, -100, err.Error())
@@ -65,7 +64,7 @@ func (uc *UserController) Post_Login() {
 // @Receiver:uc
 //
 func (uc *UserController) Post_Register() {
-	ur := new(user2.UserRequest)
+	ur := new(auth.RegisterRequest)
 	if err := uc.Ctx.ShouldBind(ur); err != nil {
 		logs.Error("unmarshal payload of %s error: %s", uc.Ctx.Request.URL.Path, err)
 		uc.Respond(http.StatusBadRequest, -100, err.Error(), nil)

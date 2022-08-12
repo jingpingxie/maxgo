@@ -23,6 +23,57 @@ import (
 )
 
 //
+// @Title:LoginRequest
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:33:29
+//
+type LoginRequest struct {
+	CID string `json:"cid"`
+	//
+	//  CTIME
+	//  @Description: 客户端登录时候上传的客户端的时间
+	//
+	CTIME    float64 `json:"ctime"`
+	Account  string  `json:"account"`
+	Password string  `json:"password"`
+}
+
+//
+// @Title:LoginResponse
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:33:33
+//
+type LoginResponse struct {
+	UserName string `json:"user_name"`
+}
+
+//
+// @Title:LoginResult
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-12 17:42:23
+//
+type LoginResult struct {
+	UserResponse LoginResponse
+	RsaCertKey   string `json:"rsa_key"`
+	RsaPublicKey string `json:"rsa_public"`
+	Token        string `json:"token"`
+}
+
+//
+// @Title:RegisterRequest
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:33:24
+//
+type RegisterRequest struct {
+	Mobile   string `json:"mobile"`
+	Password string `json:"password"`
+}
+
+//
 // @Title:DoLogin
 // @Description: do user login
 // @Author:jingpingxie
@@ -32,7 +83,7 @@ import (
 // @Return:*login.LoginResponse
 // @Return:error
 //
-func DoLogin(lr *user.LoginRequest, clientIP string) (httpStatus int, lrt *user.LoginResult, err error) {
+func DoLogin(lr *LoginRequest, clientIP string) (httpStatus int, lrt *LoginResult, err error) {
 	// get username and password
 	account := lr.Account
 	password := lr.Password
@@ -74,8 +125,8 @@ func DoLogin(lr *user.LoginRequest, clientIP string) (httpStatus int, lrt *user.
 
 	go saveAndUpdateLoginUserInfo(dbUser.UserID, password, clientIP, userRedis)
 
-	lrt = &user.LoginResult{
-		UserResponse: user.LoginResponse{UserName: dbUser.UserName},
+	lrt = &LoginResult{
+		UserResponse: LoginResponse{UserName: dbUser.UserName},
 		RsaCertKey:   rsaCertKey,
 		RsaPublicKey: rsaPublicKey,
 		Token:        encryptToken,
@@ -285,7 +336,7 @@ func generateUserPasswordHash(password string) (saltRet string, hashRet string, 
 // @Return:*user.LoginResponse
 // @Return:error
 //
-func DoRegister(rr *user.UserRequest) (httpStatus int, lrt *user.LoginResult, err error) {
+func DoRegister(rr *RegisterRequest) (httpStatus int, lrt *LoginResult, err error) {
 	// get mobile and password
 	mobile := rr.Mobile
 	password := rr.Password
@@ -315,8 +366,8 @@ func DoRegister(rr *user.UserRequest) (httpStatus int, lrt *user.LoginResult, er
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
-		lrt = &user.LoginResult{
-			UserResponse: user.LoginResponse{UserName: dbUser.UserName},
+		lrt = &LoginResult{
+			UserResponse: LoginResponse{UserName: dbUser.UserName},
 			RsaCertKey:   rsaCertKey,
 			RsaPublicKey: rsaPublicKey,
 			Token:        encryptToken,
@@ -350,8 +401,8 @@ func DoRegister(rr *user.UserRequest) (httpStatus int, lrt *user.LoginResult, er
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-	lrt = &user.LoginResult{
-		UserResponse: user.LoginResponse{UserName: rr.Mobile},
+	lrt = &LoginResult{
+		UserResponse: LoginResponse{UserName: rr.Mobile},
 		RsaCertKey:   rsaCertKey,
 		RsaPublicKey: rsaPublicKey,
 		Token:        encryptToken,
