@@ -10,6 +10,8 @@ package interval_cert
 import (
 	"maxgo/controllers/base"
 	"maxgo/routers"
+	"maxgo/services/auth"
+	"net/http"
 )
 
 func init() {
@@ -17,7 +19,7 @@ func init() {
 }
 
 type UserController struct {
-	base.IntervalCertBaseController
+	base.LoginBaseController
 }
 
 //
@@ -28,21 +30,12 @@ type UserController struct {
 // @Receiver:uc
 //
 func (uc *UserController) Post_Logout() {
-	//lr := new(user2.LogoutRequest)
-	//if err := uc.Ctx.ShouldBind(lr); err != nil {
-	//	logs.Error("unmarshal payload of %s error: %s", uc.Ctx.Request.URL.Path, err)
-	//	uc.Respond(uc.Ctx, http.StatusBadRequest, -100, err.Error())
-	//	return
-	//}
-	//statusCode, sid, cert, lrs, err := auth.DoLogout(lr)
-	//if err != nil {
-	//	uc.Respond(uc.Ctx, statusCode, -200, err.Error())
-	//	return
-	//}
-	//uc.Ctx.Header("Authorization", sid) // set token id into header
-	//uc.Ctx.Header("Cert", cert)         // set token id into header
-	//logs.Info(cert)
-	//uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrs)
+	statusCode, err := auth.DoLogout(uc.LoginUserInfo)
+	if err != nil {
+		uc.Respond(statusCode, -200, err.Error())
+		return
+	}
+	uc.Respond(http.StatusOK, 0, "success to logout")
 }
 
 //get请求其实本身HTTP协议并没有限制它的URL大小，但是不同的浏览器对其有不同的大小长度限制

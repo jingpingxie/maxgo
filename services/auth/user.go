@@ -10,12 +10,15 @@ package auth
 import (
 	"errors"
 	"maxgo/common/user"
+	user2 "maxgo/constants/user"
 	"maxgo/models"
 	"maxgo/services"
 	"maxgo/services/redis_factory"
 	"maxgo/tools/auth/jwt"
 	"maxgo/tools/snowflake"
+	"maxgo/tools/xtime"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -32,7 +35,7 @@ type User struct {
 // @Return:*login.LoginResponse
 // @Return:error
 //
-func DoLogin(lr *user.LoginRequest) (httpStatus int, lrt *user.LoginResult, err error) {
+func DoLogin(lr *user.LoginRequest, clientIP string) (httpStatus int, lrt *user.LoginResult, err error) {
 	// get username and password
 	account := lr.Account
 	password := lr.Password
@@ -56,10 +59,6 @@ func DoLogin(lr *user.LoginRequest) (httpStatus int, lrt *user.LoginResult, err 
 	if err = checkUserPassword(password, dbUser.Password, dbUser.Salt); err != nil {
 		return http.StatusUnauthorized, nil, err
 	}
-	//generate new salt and password hash
-	if err = updateUserPassword(dbUser.UserID, password); err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
 
 	//generate encrypt jwt token
 	//rsaCertKey, tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
@@ -67,14 +66,17 @@ func DoLogin(lr *user.LoginRequest) (httpStatus int, lrt *user.LoginResult, err 
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
+
 	//用户登录信息保存到redis
-	redis_factory.SaveUser(dbUser.UserID, &user.UserRedis{
-		SID:      rsaCertKey,
+	userRedis := &user.UserRedis{
 		CID:      lr.CID,
-		TimeDiff: time.Now().Unix() - lr.CTIME,
+		TimeDiff: xtime.GetTimeDiffBetweenSeverAndClient(float64(time.Now().Unix()), lr.CTIME),
 		UserID:   dbUser.UserID,
 		Mobile:   dbUser.Mobile,
-	})
+	}
+
+	go saveAndUpdateLoginUserInfo(dbUser.UserID, password, clientIP, userRedis)
+
 	lrt = &user.LoginResult{
 		UserResponse: user.LoginResponse{UserName: dbUser.UserName},
 		RsaCertKey:   rsaCertKey,
@@ -82,6 +84,61 @@ func DoLogin(lr *user.LoginRequest) (httpStatus int, lrt *user.LoginResult, err 
 		Token:        encryptToken,
 	}
 	return http.StatusOK, lrt, nil
+}
+func DoLogout(loginUser *user.UserRedis) (httpStatus int, err error) {
+	err = redis_factory.DeleteUser(loginUser.UserID)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	err = updateLogoutInfo(loginUser.UserVisitID)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	return http.StatusOK, nil
+}
+func saveAndUpdateLoginUserInfo(userID uint64, password string, clientIP string, userRedis *user.UserRedis) (err error) {
+	//generate new salt and password hash
+	err = updateUserPassword(userID, password)
+	if err != nil {
+		return err
+	}
+	userVisitID, err := createVisitInfo(userID, clientIP)
+	if err != nil {
+		return err
+	}
+	//用户登录信息保存到redis
+	userRedis.UserVisitID = userVisitID
+	err = redis_factory.SaveUser(userID, userRedis)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createVisitInfo(userID uint64, clientIP string) (userVisitID uint64, err error) {
+	//insert user info into db
+	userVisitID, err = snowflake.GenerateSnowflakeId()
+	if err != nil {
+		return 0, err
+	}
+	duration, _ := time.ParseDuration(strconv.FormatInt(user2.DEFAULT_ACCOUNT_EXPIRE_SECONDS, 10) + "s")
+	userVisitInfo := models.UserVisit{
+		UserVisitID: userVisitID,
+		UserID:      userID,
+		LoginTime:   time.Now(),
+		LogoutTime:  time.Now().Add(duration),
+		VisitIp:     clientIP}
+	if err = services.Db.Create(userVisitInfo).Error; err != nil {
+		return 0, errors.New("register user," + err.Error())
+	}
+	return userVisitID, nil
+}
+func updateLogoutInfo(userVisitID uint64) (err error) {
+	if err = services.Db.Model(&models.UserVisit{}).Where("user_visit_id = ?", userVisitID).Updates(models.UserVisit{LogoutTime: time.Now()}).Error; err != nil {
+		return errors.New("update user visit logout time," + err.Error())
+	}
+	return nil
 }
 
 //
@@ -288,53 +345,4 @@ func DoRegister(rr *user.UserRequest) (httpStatus int, lrt *user.LoginResult, er
 		Token:        encryptToken,
 	}
 	return http.StatusOK, lrt, nil
-}
-
-func DoLogout(lr *user.LogoutRequest) (httpStatus int, ur *user.LoginResponse, err error) {
-	//// get username and password
-	//account := lr.Account
-	//password := lr.Password
-	//
-	////validate username and password if is empty
-	//if len(account) == 0 {
-	//	return http.StatusBadRequest, "", "", nil, errors.New("error: username is empty")
-	//}
-	//if len(password) == 0 {
-	//	return http.StatusBadRequest, "", "", nil, errors.New("error: password is empty")
-	//}
-	//
-	//// check the username if existing
-	//var dbUser models.User
-	//services.Db.Raw("select user_id,user_name,salt,password from user where mobile = ? or email=?", account, account).Scan(&dbUser)
-	//if dbUser.UserID == 0 {
-	//	return http.StatusUnauthorized, "", "", nil, errors.New("error: user is not existing")
-	//}
-	//
-	//// check the password
-	//if err = checkUserPassword(password, dbUser.Password, dbUser.Salt); err != nil {
-	//	return http.StatusUnauthorized, "", "", nil, err
-	//}
-	////generate new salt and password hash
-	//if err = updateUserPassword(dbUser.UserID, password); err != nil {
-	//	return http.StatusInternalServerError, "", "", nil, err
-	//}
-	//
-	////generate encrypt jwt token
-	////rsaCertKey, tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
-	//rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(dbUser.UserID, dbUser.Mobile)
-	//if err != nil {
-	//	return http.StatusInternalServerError, "", "", nil, err
-	//}
-	////用户登录信息保存到redis
-	//redis_factory.SaveUser(dbUser.UserID, &user.UserRedis{
-	//	SID:      rsaCertKey,
-	//	CID:      lr.CID,
-	//	TimeDiff: time.Now().Unix() - lr.CTIME,
-	//	UserID:   dbUser.UserID,
-	//	Mobile:   dbUser.Mobile,
-	//})
-	//return http.StatusOK, rsaCertKey, rsaPublicKey, &user.LoginResponse{
-	//	UserName: dbUser.UserName,
-	//}, nil
-	return 0, nil, nil
 }

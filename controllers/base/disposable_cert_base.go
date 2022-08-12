@@ -44,6 +44,6 @@ func (dcb *DisposableCertBaseController) GetRsaCert(rsaCertKey string) (rsaCertD
 // @Receiver:cc
 // @Return:error
 //
-func (dcb *DisposableCertBaseController) PreDecrypt() error {
+func (dcb *DisposableCertBaseController) PreDecrypt() (requestMap map[string]interface{}, err error) {
 	return dcb.CertBaseController.DoPreDecrypt(dcb)
 }

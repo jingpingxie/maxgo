@@ -19,11 +19,13 @@ import (
 // @Date:2022-08-02 11:56:53
 //
 type UserVisit struct {
-	UserID        uint64    `gorm:"Column:user_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
-	LastLoginTime time.Time `gorm:"Column:last_login_time;Type:datetime;null;Comment:最近登录时间;" json:"last_login_time"`
-	LastIp        time.Time `gorm:"Column:last_ip;Type:datetime;null;Comment:最近登录ip地址;" json:"last_ip"`
-	VisitCount    uint16    `gorm:"Column:visit_count;Comment:登录次数;" json:"visit_count"`
-	ModelTime     ModelTime `gorm:"Embedded;"`
+	UserVisitID uint64    `gorm:"Column:user_visit_id;PrimaryKey:true;AutoIncrement:false;NotNull:true;Comment:user_visit_id;" json:"user_visit_id"`
+	UserID      uint64    `gorm:"Column:user_id;Index:user_id;AutoIncrement:false;NotNull:true;Comment:user_id;" json:"user_id"`
+	LoginTime   time.Time `gorm:"Column:login_time;Type:datetime;null;Comment:登录时间;" json:"login_time"`
+	LogoutTime  time.Time `gorm:"Column:logout_time;Type:datetime;null;Comment:登出时间;" json:"logout_time"`
+	VisitIp     string    `gorm:"Column:visit_ip;Type:varchar(40);null;Comment:登录ip地址;" json:"visit_ip"`
+	VisitCount  uint16    `gorm:"Column:visit_count;Comment:登录次数;" json:"visit_count"`
+	ModelTime   ModelTime `gorm:"Embedded;"`
 }
 
 func init() {

@@ -44,6 +44,6 @@ func (icb *IntervalCertBaseController) GetRsaCert(rsaCertKey string) (rsaCertDat
 // @Receiver:cc
 // @Return:error
 //
-func (icb *IntervalCertBaseController) PreDecrypt() error {
+func (icb *IntervalCertBaseController) PreDecrypt() (requestMap map[string]interface{}, err error) {
 	return icb.CertBaseController.DoPreDecrypt(icb)
 }

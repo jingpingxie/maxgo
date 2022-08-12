@@ -35,20 +35,20 @@ func (uc *UserController) Post_Login() {
 	lr := new(user2.LoginRequest)
 	if err := uc.Ctx.ShouldBind(lr); err != nil {
 		logs.Error("unmarshal payload of %s error: %s", uc.Ctx.Request.URL.Path, err)
-		uc.Respond(uc.Ctx, http.StatusBadRequest, -100, err.Error())
+		uc.Respond(http.StatusBadRequest, -100, err.Error())
 		return
 	}
 
 	logs.Info("account:%s password:%s is login", lr.Account, lr.Password)
-	statusCode, lrt, err := auth.DoLogin(lr)
+	statusCode, lrt, err := auth.DoLogin(lr, uc.Ctx.ClientIP())
 	if err != nil {
-		uc.Respond(uc.Ctx, statusCode, -200, err.Error())
+		uc.Respond(statusCode, -200, err.Error())
 		return
 	}
 	uc.Ctx.Header("Authorization", lrt.Token)
 	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
 	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
-	uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrt.UserResponse)
+	uc.Respond(http.StatusOK, 0, "success to login", lrt.UserResponse)
 }
 
 //
@@ -62,16 +62,16 @@ func (uc *UserController) Post_Register() {
 	ur := new(user2.UserRequest)
 	if err := uc.Ctx.ShouldBind(ur); err != nil {
 		logs.Error("unmarshal payload of %s error: %s", uc.Ctx.Request.URL.Path, err)
-		uc.Respond(uc.Ctx, http.StatusBadRequest, -100, err.Error(), nil)
+		uc.Respond(http.StatusBadRequest, -100, err.Error(), nil)
 		return
 	}
 	statusCode, lrt, err := auth.DoRegister(ur)
 	if err != nil {
-		uc.Respond(uc.Ctx, http.StatusBadRequest, statusCode, "", err.Error())
+		uc.Respond(http.StatusBadRequest, statusCode, "", err.Error())
 		return
 	}
 	uc.Ctx.Header("Authorization", lrt.Token)
 	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
 	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
-	uc.Respond(uc.Ctx, http.StatusOK, 0, "", lrt.UserResponse)
+	uc.Respond(http.StatusOK, 0, "", lrt.UserResponse)
 }

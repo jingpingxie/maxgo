@@ -19,9 +19,9 @@ type LoginRequest struct {
 	//  CTIME
 	//  @Description: 客户端登录时候上传的客户端的时间
 	//
-	CTIME    int64  `json:"ctime"`
-	Account  string `json:"account"`
-	Password string `json:"password"`
+	CTIME    float64 `json:"ctime"`
+	Account  string  `json:"account"`
+	Password string  `json:"password"`
 }
 
 //

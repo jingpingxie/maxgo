@@ -70,7 +70,7 @@ func (bc *BaseController) GetContext() (ctx *gin.Context) {
 // @Param:message
 // @Param:data
 //
-func (bc *BaseController) Respond(ctx *gin.Context, httpStatus int, code int, message string, data ...interface{}) {
+func (bc *BaseController) Respond(httpStatus int, code int, message string, data ...interface{}) {
 	respondData := gin.H{
 		"code": code,
 	}
@@ -85,5 +85,5 @@ func (bc *BaseController) Respond(ctx *gin.Context, httpStatus int, code int, me
 		jsonData, _ := json.Marshal(respondData)
 		logs.Debug(string(jsonData))
 	}
-	ctx.JSON(httpStatus, respondData)
+	bc.Ctx.JSON(httpStatus, respondData)
 }

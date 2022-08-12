@@ -241,3 +241,12 @@ func GetUser(userID uint64) (*user2.UserRedis, error) {
 	}
 	return userRedis, err
 }
+
+func DeleteUser(userID uint64) error {
+	err := ClientRedis.Del(string(redis_group.User) + ":" + strconv.FormatUint(userID, 10)).Err()
+	if err != nil {
+		logs.Error("failed to delete user info from redis")
+		return err
+	}
+	return nil
+}
