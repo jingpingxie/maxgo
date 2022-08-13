@@ -128,17 +128,28 @@ func Zset() {
 }
 
 //
+// @Title:GetCurrenIntervalRsaCertKey
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-13 20:17:13
+// @Return:rsaCertKey
+//
+func GetCurrenIntervalRsaCertKey() (rsaCertKey string) {
+	now := time.Now().Unix()
+	now -= now % user.DEFAULT_ACCOUNT_EXPIRE_SECONDS
+	nowBytes := number.Int64ToBytes(now)
+	rsaCertKey = fmt.Sprintf("%x", md5.Sum(nowBytes))
+	return rsaCertKey
+}
+
+//
 // @Title:GenerateIntervalRsaCert
 // @Description: get rsa cert data,the cert data should be changed interval to prevent compromised
 // @Author:jingpingxie
 // @Date:2022-08-07 21:31:19
 // @Receiver:rf
 //
-func GenerateIntervalRsaCert() (rsaCertKey string, rsaCertData *rsa_cert.RsaCert) {
-	now := time.Now().Unix()
-	now -= now % user.DEFAULT_ACCOUNT_EXPIRE_SECONDS
-	nowBytes := number.Int64ToBytes(now)
-	rsaCertKey = fmt.Sprintf("%x", md5.Sum(nowBytes))
+func GenerateIntervalRsaCert(rsaCertKey string) (rsaCertData *rsa_cert.RsaCert) {
 	rsaCertData = &rsa_cert.RsaCert{}
 	key := string(redis_group.IntervalCert) + ":" + rsaCertKey
 	err := ClientRedis.Get(key).Scan(rsaCertData)
@@ -147,17 +158,36 @@ func GenerateIntervalRsaCert() (rsaCertKey string, rsaCertData *rsa_cert.RsaCert
 		rsaCertData = &rsa_cert.RsaCert{}
 		err = rsaCertData.Generate()
 		if err != nil {
-			return "", nil
+			return nil
 		}
-		//失效时间的2倍，以保证足够的时间使用
 		err = ClientRedis.SetNX(key, rsaCertData, time.Duration(user.DEFAULT_ACCOUNT_EXPIRE_SECONDS*1e9*2)).Err()
 		if err != nil {
 			logs.Error("set rsa cert data to redis")
-			return "", nil
+			return nil
 		}
 	}
-	return rsaCertKey, rsaCertData
+	return rsaCertData
 }
+
+//
+////
+//// @Title:ExtendIntervalRsaCertExpireTime
+//// @Description:
+//// @Author:jingpingxie
+//// @Date:2022-08-13 16:34:42
+//// @Param:rsaCertKey
+//// @Param:rsaCertData
+//// @Return:err
+////
+//func ExtendIntervalRsaCertExpireTime(rsaCertKey string, rsaCertData *rsa_cert.RsaCert) (err error) {
+//	key := string(redis_group.IntervalCert) + ":" + rsaCertKey
+//	err = ClientRedis.Set(key, rsaCertData, time.Duration(user.DEFAULT_ACCOUNT_EXPIRE_SECONDS*1e9)).Err()
+//	if err != nil {
+//		logs.Error("extend rsa cert expire time to redis")
+//		return err
+//	}
+//	return nil
+//}
 
 //
 // @Title:GetIntervalRsaCert
@@ -258,6 +288,24 @@ func GetUser(userID uint64) (*user2.UserRedis, error) {
 		return nil, err
 	}
 	return userRedis, err
+}
+
+//
+// @Title:ExtendUserExpireTime
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-13 16:13:45
+// @Param:userID
+// @Param:userRedis
+// @Return:err
+//
+func ExtendUserExpireTime(userID uint64, userRedis *user2.UserRedis) (err error) {
+	err = ClientRedis.Set(string(redis_group.User)+":"+strconv.FormatUint(userID, 10), userRedis, time.Duration(user.DEFAULT_ACCOUNT_EXPIRE_SECONDS*1e9)).Err()
+	if err != nil {
+		logs.Error("extend user expire time to redis")
+		return err
+	}
+	return nil
 }
 
 //

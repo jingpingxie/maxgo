@@ -73,13 +73,14 @@ func (bc *BaseController) DoPreDecrypt(icb ICertBaseController) (requestMap map[
 		bc.Respond(http.StatusUnauthorized, -420, "no encrypt data provided")
 		return nil, errors.New("no encrypt data provided")
 	}
-	rsaCert, err := icb.GetRsaCert(requestMap["cert_key"].(string))
+	rsaCertKey := requestMap["cert_key"].(string)
+	rsaCert, err := icb.GetRsaCert(rsaCertKey)
 	if err != nil {
 		logs.Error("failed to get rsa cert, %s error: %s", bc.Ctx.Request.URL.Path, err)
 		bc.Respond(http.StatusUnauthorized, -600, "failed to get rsa cert")
 		return nil, err
 	}
-	delete(requestMap, "cert_key")
+	//delete(requestMap, "cert_key")
 	if requestMap["token"] != nil {
 		token, err := rsaCert.Decrypt(requestMap["token"].(string))
 		if err != nil {
@@ -117,6 +118,13 @@ func (bc *BaseController) DoPreDecrypt(icb ICertBaseController) (requestMap map[
 			return nil, err
 		}
 		bc.Ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(requestData))
+		////extend valid time of rsa cert key
+		//err = redis_factory.ExtendIntervalRsaCertExpireTime(rsaCertKey, rsaCert)
+		//if err != nil {
+		//	logs.Error("failed to extend valid time of rsa cert key of %s error: %s", bc.Ctx.Request.URL.Path, err)
+		//	bc.Respond(http.StatusUnauthorized, -900, "failed to marshal requestMap")
+		//	return nil, err
+		//}
 	}
 	return requestMap, nil
 }

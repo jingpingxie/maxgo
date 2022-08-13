@@ -34,17 +34,18 @@ type PassportController struct {
 	base.BaseController
 }
 
-//
-// @Title:Get_IntervalCertData
-// @Description:
-// @Author:jingpingxie
-// @Date:2022-08-07 14:16:27
-// @Receiver:uc
-//
-func (uc *PassportController) Get_IntervalCertData() {
-	rsaCertKey, rsaCertData := redis_factory.GenerateIntervalRsaCert()
-	uc.Respond(http.StatusOK, 0, "", map[string]string{"certKey": rsaCertKey, "publicKey": rsaCertData.PublicKey})
-}
+////
+//// @Title:Get_IntervalCertData
+//// @Description:
+//// @Author:jingpingxie
+//// @Date:2022-08-07 14:16:27
+//// @Receiver:uc
+////
+//func (uc *PassportController) Get_IntervalCertData() {
+//	rsaCertKey := redis_factory.GetCurrenIntervalRsaCertKey()
+//	rsaCertData := redis_factory.GenerateIntervalRsaCert(rsaCertKey)
+//	uc.Respond(http.StatusOK, 0, "", map[string]string{"certKey": rsaCertKey, "publicKey": rsaCertData.PublicKey})
+//}
 
 //
 // @Title:Get_DisposableCert

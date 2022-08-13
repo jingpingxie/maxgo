@@ -181,7 +181,11 @@ func match(path string, route Route) gin.HandlerFunc {
 				loginController, ok := route.controller.(base.ILoginBaseController)
 				if ok {
 					//must login
-					err := loginController.CheckUser(requestMap)
+					userRedis, err := loginController.CheckUser(requestMap)
+					if err != nil {
+						return
+					}
+					err = loginController.RenewExpiredToken(requestMap["cert_key"].(string), userRedis.UserID, userRedis.Mobile)
 					if err != nil {
 						return
 					}

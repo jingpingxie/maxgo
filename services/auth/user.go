@@ -118,7 +118,7 @@ func saveAndGetLoginResult(lr *LoginRequest, clientIP string, dbUser *models.Use
 	go saveAndUpdateLoginUserInfo(lr, clientIP, dbUser, isNewUser)
 
 	//generate encrypt jwt token
-	rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(dbUser.UserID, dbUser.Mobile)
+	rsaCertKey, rsaPublicKey, encryptToken, err := GenerateUserToken(dbUser.UserID, dbUser.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
@@ -236,7 +236,7 @@ func updateLogoutInfo(userVisitID uint64) (err error) {
 }
 
 //
-// @Title:generateToken
+// @Title:GenerateUserToken
 // @Description:
 // @Author:jingpingxie
 // @Date:2022-08-09 12:39:27
@@ -245,13 +245,14 @@ func updateLogoutInfo(userVisitID uint64) (err error) {
 // @Return:string
 // @Return:error
 //
-func generateToken(userID uint64, mobile string) (rsaCertKey string, rsaPublicKey string, encryptToken string, err error) {
+func GenerateUserToken(userID uint64, mobile string) (rsaCertKey string, rsaPublicKey string, encryptToken string, err error) {
 	tokenString, err := jwt.GenerateToken(userID, mobile, 0)
 	if err != nil {
 		return "", "", "", errors.New("failed to generate jwt token")
 	}
 	//generate rsa private key
-	rsaCertKey, rsaCert := redis_factory.GenerateIntervalRsaCert()
+	rsaCertKey = redis_factory.GetCurrenIntervalRsaCertKey()
+	rsaCert := redis_factory.GenerateIntervalRsaCert(rsaCertKey)
 	if rsaCert == nil {
 		return "", "", "", errors.New("failed to get interval rsa cert")
 	}
