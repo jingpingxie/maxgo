@@ -41,7 +41,7 @@ func (uc *UserController) Post_Logout() {
 		uc.Respond(statusCode, -200, err.Error())
 		return
 	}
-	uc.Respond(http.StatusOK, 0, "success to logout")
+	uc.Respond(http.StatusOK, 0, "succeed to logout")
 }
 
 //get请求其实本身HTTP协议并没有限制它的URL大小，但是不同的浏览器对其有不同的大小长度限制

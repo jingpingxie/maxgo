@@ -40,6 +40,18 @@ type LoginRequest struct {
 }
 
 //
+// @Title:RegisterRequest
+// @Description:
+// @Author:jingpingxie
+// @Date:2022-08-10 18:33:24
+//
+//type RegisterRequest struct {
+//	Mobile   string `json:"mobile"`
+//	Password string `json:"password"`
+//}
+type RegisterRequest = LoginRequest
+
+//
 // @Title:LoginResponse
 // @Description:
 // @Author:jingpingxie
@@ -60,17 +72,6 @@ type LoginResult struct {
 	RsaCertKey   string `json:"rsa_key"`
 	RsaPublicKey string `json:"rsa_public"`
 	Token        string `json:"token"`
-}
-
-//
-// @Title:RegisterRequest
-// @Description:
-// @Author:jingpingxie
-// @Date:2022-08-10 18:33:24
-//
-type RegisterRequest struct {
-	Mobile   string `json:"mobile"`
-	Password string `json:"password"`
 }
 
 //
@@ -102,29 +103,25 @@ func DoLogin(lr *LoginRequest, clientIP string) (httpStatus int, lrt *LoginResul
 	if dbUser.UserID == 0 {
 		return http.StatusUnauthorized, nil, errors.New("error: user is not existing")
 	}
+	return loginWithDBUserCheck(lr, clientIP, &dbUser)
+}
 
+func loginWithDBUserCheck(lr *LoginRequest, clientIP string, dbUser *models.User) (httpStatus int, lrt *LoginResult, err error) {
 	// check the password
-	if err = checkUserPassword(password, dbUser.Password, dbUser.Salt); err != nil {
+	if err = checkUserPassword(lr.Password, dbUser.Password, dbUser.Salt); err != nil {
 		return http.StatusUnauthorized, nil, err
 	}
+	return saveAndGetLoginResult(lr, clientIP, dbUser, false)
+}
+
+func saveAndGetLoginResult(lr *LoginRequest, clientIP string, dbUser *models.User, isNewUser bool) (httpStatus int, lrt *LoginResult, err error) {
+	go saveAndUpdateLoginUserInfo(lr, clientIP, dbUser, isNewUser)
 
 	//generate encrypt jwt token
-	//rsaCertKey, tokenString, err := generateToken(dbUser.UserID, dbUser.Mobile)
 	rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(dbUser.UserID, dbUser.Mobile)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-
-	//用户登录信息保存到redis
-	userRedis := &user.UserRedis{
-		CID:      lr.CID,
-		TimeDiff: xtime.GetTimeDiffBetweenSeverAndClient(float64(time.Now().Unix()), lr.CTIME),
-		UserID:   dbUser.UserID,
-		Mobile:   dbUser.Mobile,
-	}
-
-	go saveAndUpdateLoginUserInfo(dbUser.UserID, password, clientIP, userRedis)
-
 	lrt = &LoginResult{
 		UserResponse: LoginResponse{UserName: dbUser.UserName},
 		RsaCertKey:   rsaCertKey,
@@ -166,19 +163,27 @@ func DoLogout(loginUser *user.UserRedis) (httpStatus int, err error) {
 // @Param:userRedis
 // @Return:err
 //
-func saveAndUpdateLoginUserInfo(userID uint64, password string, clientIP string, userRedis *user.UserRedis) (err error) {
-	//generate new salt and password hash
-	err = updateUserPassword(userID, password)
-	if err != nil {
-		return err
+func saveAndUpdateLoginUserInfo(lr *LoginRequest, clientIP string, dbUser *models.User, isNewUser bool) (err error) {
+	if isNewUser == false {
+		//generate new salt and password hash
+		err = updateUserPassword(dbUser.UserID, lr.Password)
+		if err != nil {
+			return err
+		}
 	}
-	userVisitID, err := createVisitInfo(userID, clientIP)
+	userVisitID, err := createVisitInfo(dbUser.UserID, clientIP)
 	if err != nil {
 		return err
 	}
 	//用户登录信息保存到redis
-	userRedis.UserVisitID = userVisitID
-	err = redis_factory.SaveUser(userID, userRedis)
+	userRedis := &user.UserRedis{
+		CID:         lr.CID,
+		TimeDiff:    xtime.GetTimeDiffBetweenSeverAndClient(float64(time.Now().Unix()), lr.CTIME),
+		UserID:      dbUser.UserID,
+		Mobile:      dbUser.Mobile,
+		UserVisitID: userVisitID,
+	}
+	err = redis_factory.SaveUser(dbUser.UserID, userRedis)
 	if err != nil {
 		return err
 	}
@@ -336,9 +341,9 @@ func generateUserPasswordHash(password string) (saltRet string, hashRet string, 
 // @Return:*user.LoginResponse
 // @Return:error
 //
-func DoRegister(rr *RegisterRequest) (httpStatus int, lrt *LoginResult, err error) {
+func DoRegister(rr *RegisterRequest, clientIP string) (httpStatus int, lrt *LoginResult, err error) {
 	// get mobile and password
-	mobile := rr.Mobile
+	mobile := rr.Account
 	password := rr.Password
 
 	//validate username and password if is empty
@@ -353,26 +358,7 @@ func DoRegister(rr *RegisterRequest) (httpStatus int, lrt *LoginResult, err erro
 	services.Db.Raw("select user_id,user_name,salt,password from user where mobile = ?", mobile).Scan(&dbUser)
 	if dbUser.UserID != 0 {
 		// the user is existed
-		// check the password
-		if err = checkUserPassword(password, dbUser.Password, dbUser.Salt); err != nil {
-			return http.StatusUnauthorized, nil, err
-		}
-		//generate new salt and password hash
-		if err = updateUserPassword(dbUser.UserID, password); err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
-		// generate token
-		rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(dbUser.UserID, rr.Mobile)
-		if err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
-		lrt = &LoginResult{
-			UserResponse: LoginResponse{UserName: dbUser.UserName},
-			RsaCertKey:   rsaCertKey,
-			RsaPublicKey: rsaPublicKey,
-			Token:        encryptToken,
-		}
-		return http.StatusOK, lrt, nil
+		return loginWithDBUserCheck(rr, clientIP, &dbUser)
 	}
 
 	//generate salt and password hash
@@ -388,24 +374,12 @@ func DoRegister(rr *RegisterRequest) (httpStatus int, lrt *LoginResult, err erro
 	}
 	newUser := models.User{
 		UserID:   userID,
-		UserName: rr.Mobile,
-		Mobile:   rr.Mobile,
+		UserName: rr.Account,
+		Mobile:   rr.Account,
 		Salt:     salt,
 		Password: hash}
 	if err = services.Db.Create(newUser).Error; err != nil {
 		return http.StatusInternalServerError, nil, errors.New("register user," + err.Error())
 	}
-
-	// generate token
-	rsaCertKey, rsaPublicKey, encryptToken, err := generateToken(userID, rr.Mobile)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-	lrt = &LoginResult{
-		UserResponse: LoginResponse{UserName: rr.Mobile},
-		RsaCertKey:   rsaCertKey,
-		RsaPublicKey: rsaPublicKey,
-		Token:        encryptToken,
-	}
-	return http.StatusOK, lrt, nil
+	return saveAndGetLoginResult(rr, clientIP, &newUser, true)
 }

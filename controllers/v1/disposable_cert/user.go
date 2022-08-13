@@ -53,7 +53,7 @@ func (uc *UserController) Post_Login() {
 	uc.Ctx.Header("Authorization", lrt.Token)
 	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
 	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
-	uc.Respond(http.StatusOK, 0, "success to login", lrt.UserResponse)
+	uc.Respond(http.StatusOK, 0, "succeed to login", lrt.UserResponse)
 }
 
 //
@@ -67,16 +67,16 @@ func (uc *UserController) Post_Register() {
 	ur := new(auth.RegisterRequest)
 	if err := uc.Ctx.ShouldBind(ur); err != nil {
 		logs.Error("unmarshal payload of %s error: %s", uc.Ctx.Request.URL.Path, err)
-		uc.Respond(http.StatusBadRequest, -100, err.Error(), nil)
+		uc.Respond(http.StatusBadRequest, -100, err.Error())
 		return
 	}
-	statusCode, lrt, err := auth.DoRegister(ur)
+	statusCode, lrt, err := auth.DoRegister(ur, uc.Ctx.ClientIP())
 	if err != nil {
-		uc.Respond(http.StatusBadRequest, statusCode, "", err.Error())
+		uc.Respond(statusCode, -200, err.Error())
 		return
 	}
 	uc.Ctx.Header("Authorization", lrt.Token)
 	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
 	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
-	uc.Respond(http.StatusOK, 0, "", lrt.UserResponse)
+	uc.Respond(http.StatusOK, 0, "succeed to register", lrt.UserResponse)
 }
