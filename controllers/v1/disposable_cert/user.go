@@ -50,9 +50,10 @@ func (uc *UserController) Post_Login() {
 		uc.Respond(statusCode, -200, err.Error())
 		return
 	}
+	uc.Ctx.Header("Access-Control-Expose-Headers", "Authorization,cert_key,public_key")
 	uc.Ctx.Header("Authorization", lrt.Token)
-	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
-	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
+	uc.Ctx.Header("cert_key", lrt.RsaCertKey)
+	uc.Ctx.Header("public_key", lrt.RsaPublicKey)
 	uc.Respond(http.StatusOK, 0, "succeed to login", lrt.UserResponse)
 }
 
@@ -75,8 +76,9 @@ func (uc *UserController) Post_Register() {
 		uc.Respond(statusCode, -200, err.Error())
 		return
 	}
+	uc.Ctx.Header("Access-Control-Expose-Headers", "Authorization,cert_key,public_key")
 	uc.Ctx.Header("Authorization", lrt.Token)
-	uc.Ctx.Header("CertKey", lrt.RsaCertKey)
-	uc.Ctx.Header("PublicKey", lrt.RsaPublicKey)
+	uc.Ctx.Header("cert_key", lrt.RsaCertKey)
+	uc.Ctx.Header("public_key", lrt.RsaPublicKey)
 	uc.Respond(http.StatusOK, 0, "succeed to register", lrt.UserResponse)
 }

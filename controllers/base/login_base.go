@@ -106,8 +106,10 @@ func (lbc *LoginBaseController) RenewExpiredToken(oldCertKey string, userID uint
 	if err != nil {
 		return err
 	}
+
+	lbc.Ctx.Header("Access-Control-Expose-Headers", "Authorization,cert_key,public_key")
 	lbc.Ctx.Header("Authorization", encryptToken)
-	lbc.Ctx.Header("CertKey", rsaCertKey)
-	lbc.Ctx.Header("PublicKey", rsaPublicKey)
+	lbc.Ctx.Header("cert_key", rsaCertKey)
+	lbc.Ctx.Header("public_key", rsaPublicKey)
 	return nil
 }

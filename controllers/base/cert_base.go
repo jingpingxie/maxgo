@@ -63,7 +63,8 @@ func (bc *BaseController) DoPreDecrypt(icb ICertBaseController) (requestMap map[
 		bc.Respond(http.StatusUnauthorized, -300, "failed to unmarshal rawData")
 		return nil, err
 	}
-	if requestMap["cert_key"] == nil {
+	certKey := bc.Ctx.GetHeader("cert_key")
+	if certKey == "" {
 		logs.Error("no cert_key provided of %s error: %s", bc.Ctx.Request.URL.Path, err)
 		bc.Respond(http.StatusUnauthorized, -410, "no cert_key provided")
 		return nil, errors.New("no cert_key provided")
@@ -73,7 +74,7 @@ func (bc *BaseController) DoPreDecrypt(icb ICertBaseController) (requestMap map[
 		bc.Respond(http.StatusUnauthorized, -420, "no encrypt data provided")
 		return nil, errors.New("no encrypt data provided")
 	}
-	rsaCertKey := requestMap["cert_key"].(string)
+	rsaCertKey := certKey
 	rsaCert, err := icb.GetRsaCert(rsaCertKey)
 	if err != nil {
 		logs.Error("failed to get rsa cert, %s error: %s", bc.Ctx.Request.URL.Path, err)
@@ -81,8 +82,10 @@ func (bc *BaseController) DoPreDecrypt(icb ICertBaseController) (requestMap map[
 		return nil, err
 	}
 	//delete(requestMap, "cert_key")
-	if requestMap["token"] != nil {
-		token, err := rsaCert.Decrypt(requestMap["token"].(string))
+	//token := requestMap["token"]
+	token := bc.Ctx.GetHeader("Authorization")
+	if token != "" {
+		token, err := rsaCert.Decrypt(token)
 		if err != nil {
 			logs.Error("failed to decrypt token data, %s error: %s", bc.Ctx.Request.URL.Path, err)
 			bc.Respond(http.StatusUnauthorized, -700, "failed to decrypt token data")

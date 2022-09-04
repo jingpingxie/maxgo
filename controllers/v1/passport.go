@@ -48,7 +48,7 @@ type PassportController struct {
 //}
 
 //
-// @Title:Get_DisposableCert
+// @Title:Get_Disposable_Cert
 // @Description: get disposable cert data
 // @Author:jingpingxie
 // @Date:2022-08-09 08:50:08
@@ -56,5 +56,11 @@ type PassportController struct {
 //
 func (uc *PassportController) Get_DisposableCert() {
 	rsaCertKey, rsaCertData := redis_factory.GenerateDisposableRsaCert()
-	uc.Respond(http.StatusOK, 0, "", map[string]string{"certKey": rsaCertKey, "publicKey": rsaCertData.PublicKey})
+
+	//uc.Respond(http.StatusOK, 0, "", map[string]string{"certKey": rsaCertKey, "publicKey": rsaCertData.PublicKey})
+
+	uc.Ctx.Header("Access-Control-Expose-Headers", "cert_key,public_key")
+	uc.Ctx.Header("cert_key", rsaCertKey)
+	uc.Ctx.Header("public_key", rsaCertData.PublicKey)
+	uc.Respond(http.StatusOK, 0, "succeed to get cert")
 }
